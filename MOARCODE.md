@@ -26,7 +26,6 @@ dev/myproject/                        # Your project - versioned
     ├── develop.sh                    # Launch script
     ├── codereview.sh                 # Code review script
     ├── init-firewall.sh
-    ├── install.sh                   # Install moarcode into a project
     └── reset.sh                     # Clear credentials for fresh start
 ```
 
@@ -522,34 +521,50 @@ Update `moarcode/DIARY.md` after each session:
 
 ### 7. moarcode/IMPLEMENTATION.md Template
 
+The install script creates this file. M0 is always "orient and plan" — Claude
+explores the codebase, talks to the user, and fills in the real milestones.
+
 ```markdown
 # Implementation Plan
 
-## Overview
+## How to Use This File
 
-[What we're building and why]
+This file is your build plan. Claude will follow it milestone by milestone.
+
+**Your first session:** Launch moarcode (`cd moarcode && ./develop.sh`) and tell
+Claude what you want to build. Claude will help you fill in this plan — you
+don't need to write it all yourself.
 
 ## Milestones
 
-### M1: [First Milestone Name]
+### M0: Understand the Project
 
-**Goal:** [What this achieves]
+**Goal:** Orient to the codebase and confirm a plan with the user.
 
-**Files:**
-- `src/lib/something.ts` — [purpose]
-- `src/lib/something.spec.ts` — [tests]
+**Tasks:**
+- [ ] Read the root CLAUDE.md for project context
+- [ ] Explore the existing codebase (if any) to understand structure, tech stack, and conventions
+- [ ] Ask the user what they want to build or change
+- [ ] Draft the remaining milestones (M1, M2, ...) in this file based on the discussion
+- [ ] Get user confirmation on the plan before proceeding
 
 **Acceptance Criteria:**
-- [ ] [Specific testable requirement]
-- [ ] [Another requirement]
-- [ ] All tests pass
+- [ ] Milestones below are filled in with real tasks
+- [ ] User has confirmed the plan
 - [ ] Code review clean
 
 ---
 
-### M2: [Second Milestone Name]
+### M1: [First Milestone — fill in during M0]
 
-...
+**Goal:** [To be defined]
+
+**Tasks:**
+- [ ] [To be defined]
+
+**Acceptance Criteria:**
+- [ ] [To be defined]
+- [ ] Code review clean
 ```
 
 ---
@@ -664,6 +679,6 @@ cd moarcode
 | `develop.sh` | moarcode/ | No | Launch script (run from host) |
 | `codereview.sh` | moarcode/ | No | Code review script (run from container) |
 | `init-firewall.sh` | moarcode/ | No | Network sandbox script |
-| `install.sh` | moarcode/ | No | Install moarcode into a project |
+| `install.sh` | moarcode/ (source repo only) | No | Install moarcode into a project |
 | `reset.sh` | moarcode/ | No | Clear credentials for fresh start |
 | `.credentials/` | moarcode/ | No | OAuth tokens |

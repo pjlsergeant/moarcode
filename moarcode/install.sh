@@ -60,37 +60,43 @@ CODEX_EOF
 cat > "$TARGET_DIR/IMPLEMENTATION.md" << 'IMPL_EOF'
 # Implementation Plan
 
-## Overview
+## How to Use This File
 
-[What we're building and why]
+This file is your build plan. Claude will follow it milestone by milestone.
+
+**Your first session:** Launch moarcode (`cd moarcode && ./develop.sh`) and tell
+Claude what you want to build. Claude will help you fill in this plan — you
+don't need to write it all yourself.
 
 ## Milestones
 
-### M1: [First Milestone Name]
+### M0: Understand the Project
 
-**Goal:** [What this achieves]
+**Goal:** Orient to the codebase and confirm a plan with the user.
 
 **Tasks:**
-- [ ] [Specific task]
-- [ ] [Another task]
+- [ ] Read the root CLAUDE.md for project context
+- [ ] Explore the existing codebase (if any) to understand structure, tech stack, and conventions
+- [ ] Ask the user what they want to build or change
+- [ ] Draft the remaining milestones (M1, M2, ...) in this file based on the discussion
+- [ ] Get user confirmation on the plan before proceeding
 
 **Acceptance Criteria:**
-- [ ] [Specific testable requirement]
-- [ ] All tests pass
+- [ ] Milestones below are filled in with real tasks
+- [ ] User has confirmed the plan
 - [ ] Code review clean
 
 ---
 
-### M2: [Second Milestone Name]
+### M1: [First Milestone — fill in during M0]
 
-**Goal:** [What this achieves]
+**Goal:** [To be defined]
 
 **Tasks:**
-- [ ] [Specific task]
+- [ ] [To be defined]
 
 **Acceptance Criteria:**
-- [ ] [Specific testable requirement]
-- [ ] All tests pass
+- [ ] [To be defined]
 - [ ] Code review clean
 IMPL_EOF
 
@@ -157,6 +163,6 @@ fi
 
 echo ""
 echo "Done! Next steps:"
-echo "  1. Edit moarcode/IMPLEMENTATION.md with your milestones"
-echo "  2. Review CLAUDE.md and fill in project details"
-echo "  3. cd moarcode && ./develop.sh"
+echo "  1. Review CLAUDE.md and fill in project details"
+echo "  2. cd moarcode && ./develop.sh"
+echo "  3. Tell Claude what you want to build — it will help you write the milestones"

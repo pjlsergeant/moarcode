@@ -13,13 +13,20 @@ These findings have been reviewed by the developer and are intentional:
   is the correct approach. The user must complete the OAuth flow before proceeding.
   Do not flag this again.
 
-- **`reset.sh` dotfile glob.** GNU coreutils `rm -rf` handles `.`/`..` gracefully
-  (prints a warning, does not return non-zero). The script works correctly in
-  practice. Do not flag this again.
+- **`reset.sh` dotfile glob.** Fixed in M3 — now uses rm-and-recreate instead
+  of globbing. Do not flag this again.
 
 - **Codex symlink in spec.** No symlink reference exists in MOARCODE.md. The
   Dockerfile installs codex via npm globally and `codereview.sh` uses
   `command -v codex`. This is correct. Do not flag this again.
+
+- **Firewall does not cover IPv6.** Accepted for v1. The firewall is optional
+  and documented as such. IPv6 hardening is a future enhancement, not a blocker.
+  Do not flag this again.
+
+- **NET_ADMIN/NET_RAW caps always granted.** Accepted for v1. The caps are
+  harmless without the firewall script being invoked, and gating them behind a
+  flag adds complexity for minimal benefit. Do not flag this again.
 
 ---
 
@@ -68,3 +75,27 @@ These findings have been reviewed by the developer and are intentional:
 ### Notes
 
 - M1 verification tasks in `moarcode/IMPLEMENTATION.md` are still unchecked, which aligns with `moarcode/DIARY.md`. The above issues should be addressed before M1 can pass reliably.
+
+---
+
+## Review — 2026-02-06 19:27:49 +0000
+
+### Findings
+
+1. **Spec/docs drift: codereview temp path no longer matches documentation.**
+   - `moarcode/codereview.sh` writes temp files under `moarcode/tmp/`, but the MOARCODE spec still documents `/tmp` usage. This is a deviation from `MOARCODE.md` and can confuse users or reviewers. Update `MOARCODE.md` to reflect `moarcode/tmp/` or revert the script to `/tmp` if that was intended. (Files: `moarcode/codereview.sh`, `MOARCODE.md`)
+
+2. **`develop.sh` uses raw project folder name for Docker volume; spaces break.**
+   - `PROJECT_NAME=$(basename "$(cd .. && pwd)")` is used directly in `docker volume create`. If the project directory contains spaces or other invalid characters, `docker volume create` fails and the container launch breaks. Consider sanitizing the name or using a stable hash for the volume name. (File: `moarcode/develop.sh`)
+
+---
+
+## Review — 2026-02-06 19:30:34 +0000
+
+### Findings
+
+1. **Network sandbox ignores IPv6 traffic.**
+   `moarcode/init-firewall.sh` only configures `iptables` (IPv4). On hosts/containers with IPv6 enabled, outbound IPv6 remains unrestricted, so the “HTTP/HTTPS/DNS only” guarantee is incomplete. If the sandbox is meant to be strict, add `ip6tables` rules (or explicitly disable IPv6) and document the behavior.
+
+2. **Container is granted elevated networking capabilities unconditionally.**
+   `moarcode/develop.sh` always adds `--cap-add=NET_ADMIN` and `--cap-add=NET_RAW`, even when the firewall is not used. This broadens the container’s privilege surface by default. Consider gating these caps behind an opt-in flag (e.g., `MOARCODE_FIREWALL=1`) to match the “optional” network sandbox in the spec.

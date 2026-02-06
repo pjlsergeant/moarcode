@@ -16,7 +16,7 @@ in a Docker container.
 > **REQUIRED:** Before starting any work, you MUST read:
 > 1. `moarcode/CLAUDE.md` for workflow instructions
 > 2. `moarcode/IMPLEMENTATION.md` for the build plan
-> 3. `MOARCODE.md` for the full specification
+> 3. `README.md` for how it all fits together
 
 Key files in moarcode/:
 | File | Purpose |

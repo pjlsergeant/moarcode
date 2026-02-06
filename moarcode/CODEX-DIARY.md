@@ -4,6 +4,25 @@ Code review history and findings. Updated by Codex during each review.
 
 ---
 
+## Accepted / Won't Fix
+
+These findings have been reviewed by the developer and are intentional:
+
+- **Container entrypoint fails if Codex auth fails.** This is expected behavior.
+  Codex auth is required for code review to work, so failing fast on first-run
+  is the correct approach. The user must complete the OAuth flow before proceeding.
+  Do not flag this again.
+
+- **`reset.sh` dotfile glob.** GNU coreutils `rm -rf` handles `.`/`..` gracefully
+  (prints a warning, does not return non-zero). The script works correctly in
+  practice. Do not flag this again.
+
+- **Codex symlink in spec.** No symlink reference exists in MOARCODE.md. The
+  Dockerfile installs codex via npm globally and `codereview.sh` uses
+  `command -v codex`. This is correct. Do not flag this again.
+
+---
+
 (No reviews yet)
 
 ---

@@ -66,3 +66,36 @@ M1: Verify core scripts work — run `./develop.sh` and test the container.
 - Verify Codex auth flow actually works with `codex exec`
 - Update MOARCODE.md to remove references to `claude login`
 - Continue M1 verification
+
+---
+
+## Session 3 — 2026-02-06
+
+### What was done
+
+- Ran first Codex code review — codereview.sh works end to end
+- Addressed code review findings:
+  - **Codex auth hard-fail:** Accepted as expected behavior. Failing fast on
+    first-run is correct — Codex auth is required for code review.
+  - **DIARY.md out of sync with code:** Session 2 described switching to
+    `codex exec "Say hello"` but that change was never applied to
+    `container-entrypoint.sh`. The entrypoint still uses
+    `codex login --device-auth`, which is the correct intended approach.
+    This diary entry corrects the record.
+  - **reset.sh glob:** False positive. GNU `rm -rf` handles `.`/`..` gracefully.
+  - **Symlink spec drift:** False positive. No symlink reference exists in
+    MOARCODE.md.
+- Added "Accepted / Won't Fix" section to CODEX-DIARY.md so Codex stops
+  re-flagging accepted findings in future reviews.
+
+### Decisions
+
+- `codex login --device-auth` is the correct auth approach (not `codex exec`
+  as Session 2 incorrectly claimed was implemented)
+- Accepted findings get documented in CODEX-DIARY.md so the review prompt's
+  "read CODEX-DIARY.md for prior context" step teaches Codex what's accepted
+
+### What's next
+
+- Re-run code review to verify Codex picks up the accepted findings
+- Continue M1 verification

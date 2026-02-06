@@ -11,22 +11,25 @@
 ### Autonomy
 
 You have permission to keep going. Don't stop to ask "should I continue?" after
-each step — proceed through the milestones.
+each step — proceed through the milestones. This includes code review: run it
+yourself, address the findings yourself, and keep moving. Never ask the user
+whether you should run code review or continue — just do it.
 
-However, **ask yourself: "Am I going in circles?"** Stop and ask for help if:
+The only reasons to stop and ask for help:
 - You've tried the same fix 2-3 times without success
 - You're unsure which approach is correct
 - A test keeps failing and you don't understand why
 
-### Code Review (MANDATORY)
+### Code Review (MANDATORY — run it yourself, don't ask)
 
-**STOP. After completing ANY feature, fix, or milestone:**
+After completing ANY feature, fix, or milestone, run code review immediately:
 
 ```bash
 /workspace/moarcode/codereview.sh
 ```
 
-**DO NOT proceed until code review passes.**
+Do NOT ask the user "should I run code review?" — the answer is always yes.
+Do NOT proceed to the next milestone until code review passes.
 
 The code review loop:
 1. Run `/workspace/moarcode/codereview.sh`

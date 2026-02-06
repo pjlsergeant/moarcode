@@ -14,11 +14,13 @@ Claude Code + Codex code review in a Docker container.
 **Goal:** Make the template ready to clone into other projects.
 
 **Tasks:**
-- [ ] Ensure all scripts are executable (`chmod +x`)
-- [ ] Add `.gitignore` to moarcode/ (ignore `.credentials/`)
-- [ ] Verify paths work when moarcode/ is cloned into a different project
-- [ ] Test with a fresh `.credentials/` directory (new login flow)
-- [ ] Update MOARCODE.md if any discrepancies found
+- [x] Ensure all scripts are executable (`chmod +x`)
+- [x] Add `.gitignore` to moarcode/ (ignore `.credentials/`)
+- [x] Add `.dockerignore` to exclude credentials from Docker build context
+- [x] Verify paths work when moarcode/ is cloned into a different project
+- [x] Fix `reset.sh` dotfile glob (use rm -rf + mkdir instead of `.*` expansion)
+- [x] Test with a fresh `.credentials/` directory (new login flow)
+- [x] Update MOARCODE.md if any discrepancies found
 
 **Acceptance Criteria:**
 - `git clone <repo> moarcode && cd moarcode && ./develop.sh` works

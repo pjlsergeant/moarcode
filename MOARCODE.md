@@ -25,7 +25,8 @@ dev/myproject/                        # Your project - versioned
     ├── container-entrypoint.sh
     ├── develop.sh                    # Launch script
     ├── codereview.sh                 # Code review script
-    └── init-firewall.sh
+    ├── init-firewall.sh
+    └── reset.sh                     # Clear credentials for fresh start
 ```
 
 > **Note:** The directory MUST be named `moarcode/`. The code review prompt references
@@ -240,10 +241,26 @@ cd "$(dirname "$0")"
 PROJECT_NAME=$(basename "$(cd .. && pwd)")
 PROJECT_ROOT=$(cd .. && pwd)
 
+echo "Building moarcode-sandbox image..."
 docker build -t moarcode-sandbox .
+
+echo "Creating node_modules volume..."
 docker volume create "${PROJECT_NAME}-node_modules" >/dev/null 2>&1 || true
+
 mkdir -p .credentials/claude .credentials/codex
 
+# Pull host git identity so commits are attributed to the developer
+GIT_ENV_FLAGS=()
+HOST_GIT_NAME=$(git config user.name 2>/dev/null || true)
+HOST_GIT_EMAIL=$(git config user.email 2>/dev/null || true)
+if [ -n "$HOST_GIT_NAME" ]; then
+  GIT_ENV_FLAGS+=(-e "GIT_AUTHOR_NAME=${HOST_GIT_NAME}" -e "GIT_COMMITTER_NAME=${HOST_GIT_NAME}")
+fi
+if [ -n "$HOST_GIT_EMAIL" ]; then
+  GIT_ENV_FLAGS+=(-e "GIT_AUTHOR_EMAIL=${HOST_GIT_EMAIL}" -e "GIT_COMMITTER_EMAIL=${HOST_GIT_EMAIL}")
+fi
+
+echo "Starting container..."
 docker run -it --rm \
     --hostname moarcode \
     -v "${PROJECT_ROOT}:/workspace" \
@@ -252,6 +269,7 @@ docker run -it --rm \
     -v "$(pwd)/.credentials/codex:/home/node/.codex" \
     -e HOST_UID="$(id -u)" \
     -e HOST_GID="$(id -g)" \
+    ${GIT_ENV_FLAGS[@]+"${GIT_ENV_FLAGS[@]}"} \
     --cap-add=NET_ADMIN \
     --cap-add=NET_RAW \
     moarcode-sandbox
@@ -333,10 +351,12 @@ fi
 #### Key Details
 
 - `develop.sh` runs from host, launches the container
+- `develop.sh` forwards the host's `git config user.name` and `user.email` into the container so commits are attributed to the developer
 - `codereview.sh` runs from inside the container
 - Prompt is in a separate `.md` file for easy editing
 - Project name derived automatically from parent directory
 - Credentials persist in `.credentials/` between runs
+- `reset.sh` clears credentials for a fresh login flow
 
 ---
 
@@ -462,6 +482,11 @@ Commit after each coherent unit:
 
 Commit message format: `M<N>: Description` where N is the milestone number.
 
+**Do NOT add `Co-Authored-By`, `Signed-off-by`, or any other trailer to commits
+unless the developer has explicitly asked you to.** Commits are attributed to
+the developer via their git identity (passed in from the host). Adding
+co-sign trailers without permission misrepresents the authorship arrangement.
+
 ### Diary Updates
 
 Update `moarcode/DIARY.md` after each session:
@@ -574,22 +599,17 @@ dist/
 $ cd dev/myproject/moarcode
 $ ./develop.sh
 
-Building image...
-Creating volume...
+Building moarcode-sandbox image...
+Creating node_modules volume...
+Starting container...
 
-=== First-run setup ===
-
-Claude credentials not found. Starting login...
-[Browser opens for Anthropic OAuth]
-✓ Logged in
-
-Codex credentials not found. Starting login...
-[Browser opens for OpenAI OAuth]
-✓ Logged in
-
-=== Setup complete. Credentials saved for future runs. ===
+=== First-run setup: Codex ===
+Codex credentials not found. Running Codex to trigger login...
+[Browser opens for OpenAI OAuth — device auth flow]
+Codex credentials saved.
 
 [Claude starts in autonomous mode]
+[If Claude credentials are missing, Claude handles its own OAuth on first launch]
 ```
 
 Next time: straight to Claude, no login prompts.
@@ -607,7 +627,7 @@ echo "moarcode/" >> .gitignore
 
 # Option 2: Copy from another project
 cp -r ../otherproject/moarcode .
-rm -rf moarcode/.credentials  # Fresh credentials for this project
+cd moarcode && ./reset.sh && cd ..   # Fresh credentials for this project
 rm -f moarcode/DIARY.md moarcode/CODEX-DIARY.md  # Fresh diaries
 
 # Then customize
@@ -635,4 +655,5 @@ cd moarcode
 | `develop.sh` | moarcode/ | No | Launch script (run from host) |
 | `codereview.sh` | moarcode/ | No | Code review script (run from container) |
 | `init-firewall.sh` | moarcode/ | No | Network sandbox script |
+| `reset.sh` | moarcode/ | No | Clear credentials for fresh start |
 | `.credentials/` | moarcode/ | No | OAuth tokens |

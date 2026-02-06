@@ -1,0 +1,12 @@
+# Credentials contain auth tokens — never send to Docker daemon
+.credentials/
+
+# Git history (if template wasn't cleaned with rm -rf .git)
+.git/
+
+# Dependencies
+node_modules/
+
+# Session state (not needed for image build)
+DIARY.md
+CODEX-DIARY.md

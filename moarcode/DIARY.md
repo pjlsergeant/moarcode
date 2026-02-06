@@ -99,3 +99,40 @@ M1: Verify core scripts work — run `./develop.sh` and test the container.
 
 - Re-run code review to verify Codex picks up the accepted findings
 - Continue M1 verification
+
+---
+
+## Session 4 — 2026-02-06
+
+### What was done
+
+- **Completed M3: Polish for Distribution**
+  - Verified all scripts already have executable permissions
+  - Verified `.gitignore` already covers `.credentials/`
+  - Audited all paths for portability — all scripts use relative paths from
+    `$(dirname "$0")` or fixed container paths (`/workspace`, `/home/node`).
+    No hardcoded project-specific paths found.
+  - Added `.dockerignore` to exclude `.credentials/`, `.git/`, `node_modules/`,
+    and session state files from Docker build context (prevents token leakage
+    to Docker daemon and speeds up builds)
+  - Fixed `reset.sh` dotfile glob — replaced `rm -rf .credentials/claude/.*`
+    (which expands to include `.` and `..`) with `rm -rf` the directory and
+    `mkdir -p` to recreate it cleanly
+  - Updated MOARCODE.md to match implementation:
+    - Added `reset.sh` to directory structure and files reference table
+    - Updated `develop.sh` example to include git identity forwarding
+    - Fixed first-run experience to show Codex-first ordering
+    - Added Co-Authored-By prohibition to CLAUDE.md template
+    - Added reset.sh mention to key details and bootstrapping sections
+
+### Decisions
+
+- `.dockerignore` excludes DIARY.md and CODEX-DIARY.md from build context since
+  they're session state, not needed for the image
+- `reset.sh` now uses rm-and-recreate instead of globbing hidden files — simpler
+  and avoids the `.`/`..` issue entirely
+
+### What's next
+
+- Run code review
+- Proceed to M4: Documentation Pass

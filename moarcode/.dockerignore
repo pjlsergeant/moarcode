@@ -10,3 +10,4 @@ node_modules/
 # Session state (not needed for image build)
 DIARY.md
 CODEX-DIARY.md
+tmp/

@@ -6,6 +6,20 @@
 > 3. `moarcode/IMPLEMENTATION.md`
 > 4. `moarcode/DIARY.md` (your previous progress)
 
+## First Session — Read This Carefully
+
+If `IMPLEMENTATION.md` only has M0 (no real milestones yet), your **entire first
+job** is to write the plan:
+
+1. Read the root CLAUDE.md and explore the existing codebase
+2. Ask the user what they want to build
+3. Write concrete milestones into `IMPLEMENTATION.md`
+4. Run code review on the plan
+5. Get user confirmation
+
+**Do NOT write any project code until the user has confirmed the plan.** The plan
+IS the first deliverable. Everything else follows from it.
+
 ## Development Flow
 
 ### Autonomy

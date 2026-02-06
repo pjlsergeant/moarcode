@@ -81,26 +81,22 @@ CODEX_EOF
 cat > "$TARGET_DIR/IMPLEMENTATION.md" << 'IMPL_EOF'
 # Implementation Plan
 
-## How to Use This File
-
-This file is your build plan. Claude will follow it milestone by milestone.
-
-**Your first session:** Launch moarcode (`cd moarcode && ./develop.sh`) and tell
-Claude what you want to build. Claude will help you fill in this plan — you
-don't need to write it all yourself.
+**DO NOT write any project code until this plan has real milestones and
+the user has confirmed them.** Writing the plan IS your first task.
 
 ## Milestones
 
-### M0: Understand the Project
+### M0: Write the Plan
 
-**Goal:** Orient to the codebase and confirm a plan with the user.
+**Goal:** Understand the project and create a concrete build plan.
 
 **Tasks:**
 - [ ] Read the root CLAUDE.md for project context
-- [ ] Explore the existing codebase (if any) to understand structure, tech stack, and conventions
+- [ ] Explore the existing codebase to understand structure, tech stack, and conventions
 - [ ] Ask the user what they want to build or change
-- [ ] Draft the remaining milestones (M1, M2, ...) in this file based on the discussion
-- [ ] Get user confirmation on the plan before proceeding
+- [ ] Write concrete milestones (M1, M2, ...) below with specific tasks and acceptance criteria
+- [ ] Run code review on this plan
+- [ ] Get user confirmation before writing any code
 
 **Acceptance Criteria:**
 - [ ] Milestones below are filled in with real tasks

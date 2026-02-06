@@ -26,6 +26,7 @@ dev/myproject/                        # Your project - versioned
     ├── develop.sh                    # Launch script
     ├── codereview.sh                 # Code review script
     ├── init-firewall.sh
+    ├── install.sh                   # Install moarcode into a project
     └── reset.sh                     # Clear credentials for fresh start
 ```
 
@@ -37,20 +38,24 @@ dev/myproject/                        # Your project - versioned
 ## Quick Start
 
 ```bash
-# Clone moarcode template into your project (then remove .git - it's a template, not a submodule)
+# Install moarcode into your project
 cd dev/myproject
-git clone https://github.com/yourname/moarcode moarcode
-rm -rf moarcode/.git
-echo "moarcode/" >> .gitignore
+/path/to/moarcode-repo/moarcode/install.sh
 
-# Create root CLAUDE.md (see template below)
+# install.sh will:
+#   - Copy template files into moarcode/ (excluding credentials, tmp, .git)
+#   - Create fresh DIARY.md, CODEX-DIARY.md, IMPLEMENTATION.md templates
+#   - Add moarcode/ to .gitignore
+#   - Create or patch CLAUDE.md with moarcode instructions
+
 # Edit moarcode/IMPLEMENTATION.md with your milestones
+# Review CLAUDE.md and fill in project details
 
 # Launch
 cd moarcode
 ./develop.sh
 
-# First run: complete Claude and Codex login flows in the browser
+# First run: complete Codex login flow in the browser
 # Credentials saved to .credentials/ for future runs
 # Then Claude starts automatically in fully autonomous mode
 
@@ -627,20 +632,16 @@ Next time: straight to Claude, no login prompts.
 ## Bootstrapping a New Project
 
 ```bash
-# Option 1: Clone template (remove .git so it's not a submodule)
+# Use the install script from a local clone of the moarcode repo
 cd dev/newproject
-git clone https://github.com/yourname/moarcode moarcode
-rm -rf moarcode/.git
-echo "moarcode/" >> .gitignore
+/path/to/moarcode-repo/moarcode/install.sh
 
-# Option 2: Copy from another project
-cp -r ../otherproject/moarcode .
-cd moarcode && ./reset.sh && cd ..   # Fresh credentials for this project
-rm -f moarcode/DIARY.md moarcode/CODEX-DIARY.md  # Fresh diaries
+# This copies template files, creates fresh diaries/milestones,
+# patches CLAUDE.md, and adds moarcode/ to .gitignore.
 
-# Then customize
-# - Create root CLAUDE.md with project description (see template above)
+# Then customize:
 # - Edit moarcode/IMPLEMENTATION.md with your milestones
+# - Review CLAUDE.md and fill in project details
 
 cd moarcode
 ./develop.sh
@@ -663,5 +664,6 @@ cd moarcode
 | `develop.sh` | moarcode/ | No | Launch script (run from host) |
 | `codereview.sh` | moarcode/ | No | Code review script (run from container) |
 | `init-firewall.sh` | moarcode/ | No | Network sandbox script |
+| `install.sh` | moarcode/ | No | Install moarcode into a project |
 | `reset.sh` | moarcode/ | No | Clear credentials for fresh start |
 | `.credentials/` | moarcode/ | No | OAuth tokens |

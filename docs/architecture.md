@@ -32,7 +32,7 @@ Runs on the host. Builds the Docker image, creates a named volume for `node_modu
 - Host git identity forwarded via environment variables
 - `NET_ADMIN` and `NET_RAW` capabilities (for the optional firewall)
 
-The project name (used for the Docker volume) is derived from the parent directory name, sanitized for Docker.
+The project name (used for the Docker image and volume) is read from `moarcode/.project-name`, which is set during `install.sh`. Falls back to the parent directory name if missing.
 
 ## codereview.sh
 
@@ -48,7 +48,7 @@ sudo /usr/local/bin/init-firewall.sh
 
 ## install.sh
 
-Runs on the host from the source repo. Copies moarcode files into the target project, excluding credentials, `.git`, `node_modules`, `tmp`, and session-specific files (diaries, implementation plan). Creates fresh templates for `DIARY.md`, `CODEX-DIARY.md`, and `IMPLEMENTATION.md`. Prepends a moarcode pointer to the top of the project's `CLAUDE.md` (or creates one).
+Runs on the host from the source repo — it is not copied into the target project. Prompts for a project name (saved to `moarcode/.project-name`), copies moarcode files excluding credentials, `.git`, `node_modules`, `tmp`, and session-specific files. Creates fresh templates for `DIARY.md`, `CODEX-DIARY.md`, and `IMPLEMENTATION.md`. Prepends a moarcode pointer to the top of the project's `CLAUDE.md` (or creates one).
 
 ## Credential flow
 

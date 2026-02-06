@@ -2,70 +2,44 @@
 
 Unsupervised AI development in a Docker container. Claude Code writes the code, Codex reviews it.
 
+## Why
+
+Claude Code and Codex are both more useful when you let them run without asking permission for every file edit and shell command. The tradeoff is trust — you need to be comfortable with what they're doing.
+
+moarcode solves this by running everything in a disposable Docker container. Your project is bind-mounted in, but the AI tools run sandboxed — they can't touch anything outside the container. So you give them full autonomy (`--dangerously-skip-permissions`) without actually being dangerous.
+
+The other thing moarcode does is pair them up. Claude writes code, then calls Codex to review it. Codex flags issues, Claude fixes them, and the loop continues. You come back to committed, reviewed code.
+
 ## Install
 
 ```bash
 cd your-project
 /path/to/moarcode/install.sh
+```
+
+This copies the template into `moarcode/`, adds it to `.gitignore`, and sets up your `CLAUDE.md`.
+
+## Usage
+
+```bash
 cd moarcode
 ./develop.sh
 ```
 
-The install script copies moarcode into your project, adds it to `.gitignore`, and sets up `CLAUDE.md`. First run will prompt you to log in to both Claude and Codex via the browser. After that, credentials are cached.
+First run prompts you to log in to Claude and Codex via the browser. After that, credentials are cached in `moarcode/.credentials/`.
 
-## What happens
-
-`develop.sh` builds a Docker image and drops you into a container with your project mounted at `/workspace`. Claude starts in fully autonomous mode (`--dangerously-skip-permissions`).
-
-Claude follows `moarcode/IMPLEMENTATION.md` milestone by milestone. After each milestone, it runs `codereview.sh`, which invokes Codex to review the changes. Claude fixes what Codex flags, commits, and moves on.
-
-```
-You (host)                    Docker container
-    |                              |
-    |  cd moarcode && ./develop.sh |
-    |----------------------------->|
-    |                              |  Claude writes code
-    |                              |  Claude runs codereview.sh
-    |                              |    -> Codex reviews, writes findings
-    |                              |  Claude fixes issues
-    |                              |  Claude commits
-    |                              |  ...next milestone
-```
-
-Everything lives in `moarcode/` which is gitignored. Your project stays clean.
-
-## Files
-
-| File | What it does |
-|------|-------------|
-| `develop.sh` | Builds image, launches container (run from host) |
-| `codereview.sh` | Runs Codex code review (run from inside container) |
-| `install.sh` | Copies moarcode into a project (source repo only) |
-| `reset.sh` | Clears saved credentials |
-| `CLAUDE.md` | Workflow rules Claude follows |
-| `IMPLEMENTATION.md` | Milestone plan (Claude helps you write this) |
-| `DIARY.md` | Claude's progress log |
-| `CODEX-DIARY.md` | Codex's review history |
-| `CODEX-REVIEW-PROMPT.md` | The prompt sent to Codex (editable) |
-| `.credentials/` | OAuth tokens (gitignored) |
-
-## How the first session works
-
-The default `IMPLEMENTATION.md` starts with M0: "Understand the Project." Claude reads your codebase, asks what you want to build, and drafts the milestones with you. You confirm the plan, and it gets to work.
+Claude starts in fully autonomous mode. It reads `IMPLEMENTATION.md` for its plan. The default plan starts with M0: understand the codebase and draft milestones with you.
 
 ## Customizing
 
-- Edit `CODEX-REVIEW-PROMPT.md` to change what Codex focuses on during review.
-- Edit `moarcode/CLAUDE.md` to change Claude's workflow rules.
-- Run `sudo /usr/local/bin/init-firewall.sh` inside the container to restrict network to HTTP/HTTPS/DNS only.
+- `moarcode/CODEX-REVIEW-PROMPT.md` — change what Codex focuses on during review
+- `moarcode/CLAUDE.md` — change Claude's workflow rules (commit frequency, diary format, etc.)
+- `sudo /usr/local/bin/init-firewall.sh` inside the container — restrict network to HTTP/HTTPS/DNS only
 
 ## Requirements
 
-- Docker
-- Git
-- A Claude account (for Claude Code)
-- An OpenAI account (for Codex)
+Docker, Git, a Claude account, an OpenAI account.
 
 ## Details
 
-See [docs/architecture.md](docs/architecture.md) for the full Dockerfile, entrypoint, and script source with annotations.
+See [docs/architecture.md](docs/architecture.md) for how the container, entrypoint, and scripts work.

@@ -7,8 +7,10 @@ cd "$(dirname "$0")"
 PROJECT_NAME=$(basename "$(cd .. && pwd)" | tr -cs '[:alnum:]-_' '-')
 PROJECT_ROOT=$(cd .. && pwd)
 
-echo "Building moarcode-sandbox image..."
-docker build -t moarcode-sandbox .
+IMAGE_NAME="moarcode-${PROJECT_NAME}"
+
+echo "Building ${IMAGE_NAME} image..."
+docker build -t "$IMAGE_NAME" .
 
 echo "Creating node_modules volume..."
 docker volume create "${PROJECT_NAME}-node_modules" >/dev/null 2>&1 || true
@@ -38,4 +40,4 @@ docker run -it --rm \
     ${GIT_ENV_FLAGS[@]+"${GIT_ENV_FLAGS[@]}"} \
     --cap-add=NET_ADMIN \
     --cap-add=NET_RAW \
-    moarcode-sandbox
+    "$IMAGE_NAME"

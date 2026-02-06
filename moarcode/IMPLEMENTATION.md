@@ -5,7 +5,7 @@
 Build the moarcode template — a bolt-on AI development environment that enables
 Claude Code + Codex code review in a Docker container.
 
-**Reference spec:** `/workspace/MOARCODE.md`
+**Reference:** `/workspace/README.md` and `/workspace/docs/architecture.md`
 
 ## Milestones
 

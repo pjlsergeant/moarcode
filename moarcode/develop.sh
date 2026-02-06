@@ -3,7 +3,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PROJECT_NAME=$(basename "$(cd .. && pwd)")
+# Sanitize project name for use as Docker volume name (replace non-alphanumeric with -)
+PROJECT_NAME=$(basename "$(cd .. && pwd)" | tr -cs '[:alnum:]-_' '-')
 PROJECT_ROOT=$(cd .. && pwd)
 
 echo "Building moarcode-sandbox image..."

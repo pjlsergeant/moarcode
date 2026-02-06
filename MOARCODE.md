@@ -238,7 +238,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-PROJECT_NAME=$(basename "$(cd .. && pwd)")
+# Sanitize project name for use as Docker volume name (replace non-alphanumeric with -)
+PROJECT_NAME=$(basename "$(cd .. && pwd)" | tr -cs '[:alnum:]-_' '-')
 PROJECT_ROOT=$(cd .. && pwd)
 
 echo "Building moarcode-sandbox image..."
@@ -322,8 +323,12 @@ if ! command -v codex &>/dev/null; then
     exit 1
 fi
 
-OUTPUT_FILE=$(mktemp /tmp/codereview-output.XXXXXX)
-DEBUG_FILE=$(mktemp /tmp/codereview-debug.XXXXXX)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEMP_DIR="${SCRIPT_DIR}/tmp"
+mkdir -p "$TEMP_DIR"
+
+OUTPUT_FILE=$(mktemp "${TEMP_DIR}/codereview-output.XXXXXX")
+DEBUG_FILE=$(mktemp "${TEMP_DIR}/codereview-debug.XXXXXX")
 
 echo "Running code review (this may take several minutes)..."
 

@@ -1,0 +1,8 @@
+# Credentials (per-project, never commit)
+.credentials/
+
+# Dependencies if installed inside moarcode/
+node_modules/
+
+# Temp files from code review
+/tmp/

@@ -19,7 +19,25 @@ if [ -d "$TARGET_DIR" ]; then
   exit 1
 fi
 
-echo "Installing moarcode into $(pwd)..."
+# Derive a default project name from the current directory
+DEFAULT_NAME=$(basename "$(pwd)" | tr -cs '[:alnum:]-_' '-' | sed 's/-$//')
+
+echo ""
+echo "Project name is used for Docker image/volume naming."
+echo "  It must be lowercase alphanumeric, hyphens, or underscores."
+printf "Project name [%s]: " "$DEFAULT_NAME"
+read -r PROJECT_NAME
+PROJECT_NAME=${PROJECT_NAME:-$DEFAULT_NAME}
+# Sanitize whatever they typed
+PROJECT_NAME=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]-_' '-' | sed 's/-$//')
+
+if [ -z "$PROJECT_NAME" ]; then
+  echo "Error: project name cannot be empty."
+  exit 1
+fi
+
+echo ""
+echo "Installing moarcode into $(pwd)/ (project: ${PROJECT_NAME})..."
 
 # Copy template files, then remove project-specific and transient content
 cp -R "$SOURCE_DIR" "$TARGET_DIR"
@@ -31,6 +49,9 @@ rm -rf "$TARGET_DIR/.credentials" \
        "$TARGET_DIR/CODEX-DIARY.md" \
        "$TARGET_DIR/IMPLEMENTATION.md" \
        "$TARGET_DIR/install.sh"
+
+# Persist project name for develop.sh
+echo "$PROJECT_NAME" > "$TARGET_DIR/.project-name"
 
 # Create fresh template files
 cat > "$TARGET_DIR/DIARY.md" << 'DIARY_EOF'

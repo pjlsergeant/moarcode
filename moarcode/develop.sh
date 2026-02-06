@@ -3,9 +3,16 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# Sanitize project name for use as Docker volume name (replace non-alphanumeric with -)
-PROJECT_NAME=$(basename "$(cd .. && pwd)" | tr -cs '[:alnum:]-_' '-')
 PROJECT_ROOT=$(cd .. && pwd)
+
+# Read project name set during install
+if [ -f .project-name ]; then
+  PROJECT_NAME=$(cat .project-name)
+else
+  echo "Warning: .project-name not found. Run install.sh first."
+  echo "Falling back to directory name."
+  PROJECT_NAME=$(basename "$PROJECT_ROOT" | tr -cs '[:alnum:]-_' '-' | sed 's/-$//')
+fi
 
 IMAGE_NAME="moarcode-${PROJECT_NAME}"
 

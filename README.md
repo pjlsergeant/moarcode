@@ -17,7 +17,7 @@ cd your-project
 /path/to/moarcode/install.sh
 ```
 
-This copies the template into `moarcode/`, adds it to `.gitignore`, and sets up your `CLAUDE.md`.
+This copies the template into `moarcode/`, adds it to `.gitignore`, and sets up your `CLAUDE.md`. It asks you to confirm a project name — this is used to name Docker images and volumes, so you can run moarcode in multiple projects simultaneously.
 
 ## Usage
 

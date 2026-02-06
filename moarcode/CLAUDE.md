@@ -50,6 +50,11 @@ Commit after each coherent unit:
 
 Commit message format: `M<N>: Description` where N is the milestone number.
 
+**Do NOT add `Co-Authored-By`, `Signed-off-by`, or any other trailer to commits
+unless the developer has explicitly asked you to.** Commits are attributed to
+the developer via their git identity (passed in from the host). Adding
+co-sign trailers without permission misrepresents the authorship arrangement.
+
 ### Diary Updates
 
 Update `moarcode/DIARY.md` after each session:

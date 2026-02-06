@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Must run from inside container where /opt/homebrew/bin/codex exists
-if [ ! -x /opt/homebrew/bin/codex ]; then
-    echo "Error: This script must be run inside the moarcode container."
+# Codex must be on PATH (installed via npm in the container)
+if ! command -v codex &>/dev/null; then
+    echo "Error: codex not found on PATH."
+    echo "This script must be run inside the moarcode container."
     echo "First run ./develop.sh, then run this from the container shell."
     exit 1
 fi
 
 OUTPUT_FILE=$(mktemp /tmp/codereview-output.XXXXXX)
 DEBUG_FILE=$(mktemp /tmp/codereview-debug.XXXXXX)
-trap "rm -f $OUTPUT_FILE $DEBUG_FILE" EXIT
 
 echo "Running code review (this may take several minutes)..."
 
@@ -20,9 +20,16 @@ cd /workspace
 # Read prompt from file
 PROMPT=$(cat /workspace/moarcode/CODEX-REVIEW-PROMPT.md)
 
-/opt/homebrew/bin/codex exec \
+if codex exec \
     --dangerously-bypass-approvals-and-sandbox \
     "$PROMPT" \
-    --output-last-message "$OUTPUT_FILE" > "$DEBUG_FILE" 2>&1
-
-cat "$OUTPUT_FILE"
+    --output-last-message "$OUTPUT_FILE" > "$DEBUG_FILE" 2>&1; then
+  cat "$OUTPUT_FILE"
+  rm -f "$OUTPUT_FILE" "$DEBUG_FILE"
+else
+  echo ""
+  echo "Code review failed. Output preserved for inspection:"
+  echo "  Debug log: $DEBUG_FILE"
+  echo "  Output:    $OUTPUT_FILE"
+  exit 1
+fi

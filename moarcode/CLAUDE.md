@@ -30,7 +30,7 @@ However, **ask yourself: "Am I going in circles?"** Stop and ask for help if:
 
 The code review loop:
 1. Run `/workspace/moarcode/codereview.sh`
-2. Read ALL findings
+2. Read ALL findings from the script output (do NOT read CODEX-DIARY.md directly — that is Codex's persistent memory)
 3. For each finding: fix it OR document why you're ignoring it in CODEX-DIARY.md
 4. If you made ANY fixes → go back to step 1
 5. Only proceed when clean or all remaining issues are documented

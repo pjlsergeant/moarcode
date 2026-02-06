@@ -93,6 +93,7 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
 
 # CRITICAL: Helps Claude skip interactive prompts
 ENV DEVCONTAINER=true
+ENV COLORTERM=truecolor
 
 # Directory setup
 RUN mkdir -p /workspace /home/node/.claude /home/node/.codex /usr/local/share/npm-global && \
@@ -110,11 +111,6 @@ USER node
 # CRITICAL: Both AI tools installed
 RUN npm install -g @anthropic-ai/claude-code @openai/codex
 
-# Symlink codex for codereview.sh compatibility
-USER root
-RUN mkdir -p /opt/homebrew/bin && ln -s /usr/local/share/npm-global/bin/codex /opt/homebrew/bin/codex
-
-USER node
 # Git config for commits
 RUN git config --global --add safe.directory /workspace \
     && git config --global user.email "ai@localhost" \
@@ -136,7 +132,7 @@ ENTRYPOINT ["/usr/local/bin/dev-entrypoint.sh"]
 | `iptables` + `sudo` | Optional network sandboxing (HTTP/HTTPS/DNS only) |
 | Both tools installed | Claude can invoke Codex via `codereview.sh` |
 | Git pre-configured | Claude can commit without user.name/email prompts |
-| `/opt/homebrew/bin` symlink | Codex path compatibility with codereview.sh |
+| `COLORTERM=truecolor` | Richer terminal colors for AI tools |
 
 ---
 
@@ -177,32 +173,41 @@ if [ -n "$CURRENT_UID" ] && [ "$CURRENT_UID" != "$TARGET_UID" ]; then
   chown -R "$TARGET_UID":"$TARGET_GID" "$NODE_MODULES_DIR"
 fi
 
+# Ensure home directory is owned correctly for credential writes
+CURRENT_HOME_UID=$(stat -c %u "$TARGET_HOME" 2>/dev/null || stat -f %u "$TARGET_HOME" 2>/dev/null || echo "")
+if [ -n "$CURRENT_HOME_UID" ] && [ "$CURRENT_HOME_UID" != "$TARGET_UID" ]; then
+  chown -R "$TARGET_UID":"$TARGET_GID" "$TARGET_HOME"
+fi
+
 export HOME="$TARGET_HOME"
 
 # First-run credential setup
+# Codex is checked FIRST because it can be triggered non-interactively.
+# Claude is checked second — its login flow is interactive and launches
+# the main session, so it must come last to avoid stdin leakage.
 CLAUDE_CREDS="/home/node/.claude/.credentials.json"
 CODEX_CREDS="/home/node/.codex/auth.json"
 
-if [ ! -f "$CLAUDE_CREDS" ] || [ ! -f "$CODEX_CREDS" ]; then
+if [ ! -f "$CODEX_CREDS" ]; then
   echo ""
-  echo "=== First-run setup ==="
+  echo "=== First-run setup: Codex ==="
+  echo "Codex credentials not found. Running Codex to trigger login..."
   echo ""
-
-  if [ ! -f "$CLAUDE_CREDS" ]; then
-    echo "Claude credentials not found. Starting login..."
-    gosu "$TARGET_USER_SPEC" claude login
-    echo ""
+  gosu "$TARGET_USER_SPEC" codex login --device-auth
+  echo ""
+  if [ -f "$CODEX_CREDS" ]; then
+    echo "Codex credentials saved."
+  else
+    echo "Warning: Codex credentials not found after login attempt."
+    echo "Code review (codereview.sh) will not work until Codex is authenticated."
   fi
-
-  if [ ! -f "$CODEX_CREDS" ]; then
-    echo "Codex credentials not found. Starting login..."
-    gosu "$TARGET_USER_SPEC" codex login
-    echo ""
-  fi
-
-  echo "=== Setup complete. Credentials saved for future runs. ==="
   echo ""
 fi
+
+# NOTE: No separate Claude login step needed. "claude login" doesn't exist
+# as a subcommand — it just starts Claude with "login" as a prompt.
+# If Claude creds are missing, the main `claude` launch below will handle
+# the auth flow itself (DEVCONTAINER=true helps skip interactive prompts).
 
 # Default to Claude in fully autonomous mode
 if [ $# -eq 0 ]; then
@@ -291,16 +296,16 @@ Runs Codex with the prompt. **Must be run from inside the container** (after `./
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Must run from inside container where /opt/homebrew/bin/codex exists
-if [ ! -x /opt/homebrew/bin/codex ]; then
-    echo "Error: This script must be run inside the moarcode container."
+# Codex must be on PATH (installed via npm in the container)
+if ! command -v codex &>/dev/null; then
+    echo "Error: codex not found on PATH."
+    echo "This script must be run inside the moarcode container."
     echo "First run ./develop.sh, then run this from the container shell."
     exit 1
 fi
 
 OUTPUT_FILE=$(mktemp /tmp/codereview-output.XXXXXX)
 DEBUG_FILE=$(mktemp /tmp/codereview-debug.XXXXXX)
-trap "rm -f $OUTPUT_FILE $DEBUG_FILE" EXIT
 
 echo "Running code review (this may take several minutes)..."
 
@@ -310,12 +315,19 @@ cd /workspace
 # Read prompt from file
 PROMPT=$(cat /workspace/moarcode/CODEX-REVIEW-PROMPT.md)
 
-/opt/homebrew/bin/codex exec \
+if codex exec \
     --dangerously-bypass-approvals-and-sandbox \
     "$PROMPT" \
-    --output-last-message "$OUTPUT_FILE" > "$DEBUG_FILE" 2>&1
-
-cat "$OUTPUT_FILE"
+    --output-last-message "$OUTPUT_FILE" > "$DEBUG_FILE" 2>&1; then
+  cat "$OUTPUT_FILE"
+  rm -f "$OUTPUT_FILE" "$DEBUG_FILE"
+else
+  echo ""
+  echo "Code review failed. Output preserved for inspection:"
+  echo "  Debug log: $DEBUG_FILE"
+  echo "  Output:    $OUTPUT_FILE"
+  exit 1
+fi
 ```
 
 #### Key Details
@@ -430,7 +442,7 @@ However, **ask yourself: "Am I going in circles?"** Stop and ask for help if:
 
 The code review loop:
 1. Run `/workspace/moarcode/codereview.sh`
-2. Read ALL findings
+2. Read ALL findings from the script output (do NOT read CODEX-DIARY.md directly — that is Codex's persistent memory)
 3. For each finding: fix it OR document why you're ignoring it in CODEX-DIARY.md
 4. If you made ANY fixes → go back to step 1
 5. Only proceed when clean or all remaining issues are documented

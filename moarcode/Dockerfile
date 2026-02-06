@@ -25,6 +25,7 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
 
 # CRITICAL: Helps Claude skip interactive prompts
 ENV DEVCONTAINER=true
+ENV COLORTERM=truecolor
 
 # Directory setup
 RUN mkdir -p /workspace /home/node/.claude /home/node/.codex /usr/local/share/npm-global && \
@@ -42,11 +43,6 @@ USER node
 # CRITICAL: Both AI tools installed
 RUN npm install -g @anthropic-ai/claude-code @openai/codex
 
-# Symlink codex for codereview.sh compatibility
-USER root
-RUN mkdir -p /opt/homebrew/bin && ln -s /usr/local/share/npm-global/bin/codex /opt/homebrew/bin/codex
-
-USER node
 # Git config for commits
 RUN git config --global --add safe.directory /workspace \
     && git config --global user.email "ai@localhost" \

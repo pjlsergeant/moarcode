@@ -30,32 +30,41 @@ if [ -n "$CURRENT_UID" ] && [ "$CURRENT_UID" != "$TARGET_UID" ]; then
   chown -R "$TARGET_UID":"$TARGET_GID" "$NODE_MODULES_DIR"
 fi
 
+# Ensure home directory is owned correctly for credential writes
+CURRENT_HOME_UID=$(stat -c %u "$TARGET_HOME" 2>/dev/null || stat -f %u "$TARGET_HOME" 2>/dev/null || echo "")
+if [ -n "$CURRENT_HOME_UID" ] && [ "$CURRENT_HOME_UID" != "$TARGET_UID" ]; then
+  chown -R "$TARGET_UID":"$TARGET_GID" "$TARGET_HOME"
+fi
+
 export HOME="$TARGET_HOME"
 
 # First-run credential setup
+# Codex is checked FIRST because it can be triggered non-interactively.
+# Claude is checked second — its login flow is interactive and launches
+# the main session, so it must come last to avoid stdin leakage.
 CLAUDE_CREDS="/home/node/.claude/.credentials.json"
 CODEX_CREDS="/home/node/.codex/auth.json"
 
-if [ ! -f "$CLAUDE_CREDS" ] || [ ! -f "$CODEX_CREDS" ]; then
+if [ ! -f "$CODEX_CREDS" ]; then
   echo ""
-  echo "=== First-run setup ==="
+  echo "=== First-run setup: Codex ==="
+  echo "Codex credentials not found. Running Codex to trigger login..."
   echo ""
-
-  if [ ! -f "$CLAUDE_CREDS" ]; then
-    echo "Claude credentials not found. Starting login..."
-    gosu "$TARGET_USER_SPEC" claude login
-    echo ""
+  gosu "$TARGET_USER_SPEC" codex login --device-auth
+  echo ""
+  if [ -f "$CODEX_CREDS" ]; then
+    echo "Codex credentials saved."
+  else
+    echo "Warning: Codex credentials not found after login attempt."
+    echo "Code review (codereview.sh) will not work until Codex is authenticated."
   fi
-
-  if [ ! -f "$CODEX_CREDS" ]; then
-    echo "Codex credentials not found. Starting login..."
-    gosu "$TARGET_USER_SPEC" codex login
-    echo ""
-  fi
-
-  echo "=== Setup complete. Credentials saved for future runs. ==="
   echo ""
 fi
+
+# NOTE: No separate Claude login step needed. "claude login" doesn't exist
+# as a subcommand — it just starts Claude with "login" as a prompt.
+# If Claude creds are missing, the main `claude` launch below will handle
+# the auth flow itself (DEVCONTAINER=true helps skip interactive prompts).
 
 # Default to Claude in fully autonomous mode
 if [ $# -eq 0 ]; then

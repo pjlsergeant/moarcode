@@ -117,10 +117,10 @@ for f in "${TEMPLATE_FILES[@]}"; do
     updated=$((updated + 1))
   else
     echo ""
-    echo "  $f has local changes:"
+    echo "  $f differs from the latest version:"
     diff -u "$TARGET_DIR/$f" "$SOURCE_DIR/$f" || true
     echo ""
-    printf "  Overwrite %s with latest version? [Y/n] " "$f"
+    printf "  Overwrite %s? [Y/n] " "$f"
     read -r answer
     case "${answer:-Y}" in
       [Yy]*|"")

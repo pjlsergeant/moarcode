@@ -76,21 +76,23 @@ the common "fix and re-check" loop.
   outputs) — Codex can answer from memory without re-reading
 - Token costs accumulate (~90% cached) but are manageable for a few rounds
 - Session ID is a UUID from the `thread.started` JSON event
-- `--json`, `--output-last-message`, and `--dangerously-bypass-approvals-and-sandbox`
-  all work with resume
+- `--json` and `--dangerously-bypass-approvals-and-sandbox` work with resume
+- `--output-last-message` does NOT work with resume (extract from JSON instead)
 
 **Tasks:**
-- [ ] Add `--continue` flag to `codereview.sh`
-- [ ] Capture session ID (via `--json` + `grep`/`jq`) after every successful review
-- [ ] Save session ID to `moarcode/tmp/.last-review-session`
-- [ ] On `--continue`: read session ID, validate as UUID, attempt
+- [x] Add `--continue` flag to `codereview.sh`
+- [x] Capture session ID (via `--json` + `grep`/`jq`) after every successful review
+- [x] Save session ID to `moarcode/tmp/.last-review-session`
+- [x] On `--continue`: read session ID, validate as UUID, attempt
       `codex exec resume <id>` with a shorter follow-up prompt
-- [ ] Resume prompt: re-read diaries/plan/CLAUDE.md, run `git status` + `git diff`
+- [x] Resume prompt: re-read diaries/plan/CLAUDE.md, run `git status` + `git diff`
       + `git diff --cached` + `git log --oneline -5`, then review changes
-- [ ] If resume fails (bad ID, expired session): clear session file, warn, and
+- [x] If resume fails (bad ID, expired session): clear session file, warn, and
       automatically fall back to a fresh review
-- [ ] Update `moarcode/CLAUDE.md` to mention `--continue` for the fix-and-recheck loop
-- [ ] Update `docs/architecture.md` codereview.sh section
+- [x] Preserve existing session ID on resume if extraction fails
+- [x] Extract final message from JSON stream (no `--output-last-message` on resume)
+- [x] Update `moarcode/CLAUDE.md` to mention `--continue` for the fix-and-recheck loop
+- [x] Update `docs/architecture.md` codereview.sh section
 
 **Acceptance Criteria:**
 - Fresh reviews work exactly as before (no behavioural change without `--continue`)

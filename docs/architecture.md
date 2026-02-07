@@ -38,7 +38,7 @@ The project name (used for the Docker image and volume) is read from `moarcode/.
 
 Runs inside the container. Reads `CODEX-REVIEW-PROMPT.md` and passes it to `codex exec`. Codex reads the codebase, writes findings to `CODEX-DIARY.md`, and returns a report. Temp files go to `moarcode/tmp/` (gitignored).
 
-Accepts optional arguments for directed reviews — any arguments are appended to the prompt as a "pay particular attention to" instruction:
+Accepts optional arguments for directed reviews — any arguments are appended to the prompt as a "pay particular attention to" instruction. Supports `--continue` to resume the previous review session instead of starting fresh (useful for the fix-and-recheck loop). Session IDs are stored in `moarcode/tmp/.last-review-session`. If resume fails (expired session, invalid ID), it falls back to a fresh review automatically.
 
 ```bash
 # Standard review
@@ -46,6 +46,12 @@ Accepts optional arguments for directed reviews — any arguments are appended t
 
 # Directed review
 /workspace/moarcode/codereview.sh "error handling in the API layer"
+
+# Continue previous review (re-check after fixes)
+/workspace/moarcode/codereview.sh --continue
+
+# Continue with a specific focus
+/workspace/moarcode/codereview.sh --continue "check the error handling fix"
 ```
 
 ## Network sandbox (optional)

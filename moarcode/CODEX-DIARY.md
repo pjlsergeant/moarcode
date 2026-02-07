@@ -340,3 +340,81 @@ None.
 - **Staged diff issue:** **Resolved** — resume prompt now calls both `git diff` and
   `git diff --cached`.
 - **Remaining findings:** **None** — no additional issues found in the resume plan.
+
+---
+
+## Review — 2026-02-07 19:57:28 UTC
+
+### Findings
+
+1. **`--continue` can resume an older session if session ID extraction fails.**
+   - **Where:** `moarcode/codereview.sh`
+   - **Why:** `save_session_id` warns when it cannot extract `thread_id`, but it does **not** clear `moarcode/tmp/.last-review-session`. After a successful review with a parse failure (format change, transient CLI output, missing `jq`), the session file can still point to the *previous* session.
+   - **Impact:** `--continue` may resume stale context, undermining the fix-and-recheck loop.
+   - **Fix idea:** If a review succeeds but `thread_id` cannot be extracted, clear the session file to avoid resuming stale sessions (and keep the warning).
+
+2. **Session ID validation rejects uppercase UUIDs.**
+   - **Where:** `moarcode/codereview.sh`
+   - **Why:** The UUID regex only allows lowercase `a-f`. If Codex ever emits uppercase hex, `--continue` will always fall back to a fresh review.
+   - **Impact:** Unnecessary fresh reviews in environments where UUIDs are uppercase (or mixed case).
+   - **Fix idea:** Normalize to lowercase before validation or use a case-insensitive regex.
+
+### Focus Check: M6 `--continue`
+
+- **Resume prompt matches plan:** Yes — it requires re-reading the diaries/plan/CLAUDE and running `git status`, `git diff`, `git diff --cached`, and `git log --oneline -5`.
+- **Fallback on resume failure:** Yes — clears the session file and runs a fresh review automatically.
+- **Docs updates:** Present in `docs/architecture.md` and `moarcode/CLAUDE.md`.
+
+---
+
+## Review — 2026-02-07 19:59:07 UTC
+
+### Findings
+
+1. **M6 checklist not marked complete despite implementation landing.**
+   - **Where:** `moarcode/IMPLEMENTATION.md`
+   - **Why:** The M6 tasks remain unchecked, but `moarcode/codereview.sh`, `moarcode/CLAUDE.md`, and `docs/architecture.md` already implement `--continue`, resume fallback, and docs updates.
+   - **Impact:** Plan/progress drift can confuse contributors about remaining work.
+   - **Fix idea:** Mark M6 tasks and acceptance criteria as complete (or explicitly note any remaining gaps).
+
+### Focus Check: Session-ID Edge Cases
+
+- **Stale session file on extraction failure:** **Fixed** — `save_session_id` now removes `moarcode/tmp/.last-review-session` when parsing fails.
+- **Uppercase UUID rejection:** **Fixed** — session IDs are lowercased before UUID validation.
+
+---
+
+## Review — 2026-02-07 20:00:50 UTC
+
+### Findings
+
+1. **Resumed reviews can clear the session file even when resume succeeds.**
+   - **Where:** `moarcode/codereview.sh`
+   - **Why:** `run_resumed_review` always calls `save_session_id`, which deletes `moarcode/tmp/.last-review-session` when it cannot extract a `thread.started` event from the JSON stream. `codex exec resume` may not emit `thread.started`, so a successful resume can still wipe the session file.
+   - **Impact:** `--continue` works once, then loses the session ID for the next run, undermining the “resume” loop.
+   - **Fix idea:** In resume mode, preserve the existing session ID if extraction fails. Options: pass the current `session_id` into `save_session_id` as a fallback, or skip saving entirely unless a new `thread.started` is found.
+
+2. **Resumed output extraction is brittle to JSON schema changes.**
+   - **Where:** `moarcode/codereview.sh`
+   - **Why:** The extractor assumes the final response arrives as an `item.completed` event with `item.type == "agent_message"` and a `.item.text` field. If Codex emits assistant messages with a different type (e.g., `assistant_message`) or structured content (e.g., `.item.content[]`), the script will emit only the warning and no review output.
+   - **Impact:** Users may see an empty review result even though the resume succeeded.
+   - **Fix idea:** Make the jq filter more tolerant (e.g., accept both `agent_message` and `assistant_message`, and fall back to `.item.output_text` or `.item.content[].text` when `.item.text` is missing).
+
+### Focus Check
+
+- **Resume path `--output-last-message`:** Not used in `codex exec resume` path (OK).
+- **JSON extraction approach:** Works for the expected schema, but see Finding 2 for robustness concerns.
+
+---
+
+## Review — 2026-02-07 20:02:38 UTC
+
+### Findings
+
+None.
+
+### Focus Check
+
+- **Session ID preservation on resume:** **Fixed** — resume path now preserves the existing session ID when no `thread.started` event is found in the resume JSON stream.
+- **Resumed JSON extraction robustness:** **Fixed** — extractor now tolerates `assistant_message` and falls back to `.item.output_text` / `.item.content[].text` when `.item.text` is missing.
+- **Resume path `--output-last-message`:** Not used in `codex exec resume` path (OK).

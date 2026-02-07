@@ -61,8 +61,14 @@ The code review loop:
 1. Run `/workspace/moarcode/codereview.sh`
 2. Read ALL findings from the script output (do NOT read CODEX-DIARY.md directly — that is Codex's persistent memory)
 3. For each finding: fix it OR document why you're ignoring it in CODEX-DIARY.md
-4. If you made ANY fixes → go back to step 1
+4. If you made ANY fixes → go back to step 1, using `--continue` to resume the
+   previous review session (faster — Codex remembers what it already reviewed):
+   `/workspace/moarcode/codereview.sh --continue "check whether the fixes address your findings"`
 5. Only proceed when clean or all remaining issues are documented
+
+**When to use `--continue`:** Use it for re-checks within the same review cycle
+(fix → re-review → fix → re-review). Use a fresh review (no flag) at milestone
+boundaries or when significant new code has been written.
 
 ### Commit Frequently
 

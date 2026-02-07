@@ -36,9 +36,15 @@ The only reasons to stop and ask for help:
 
 ### Code Review (MANDATORY — run it yourself, don't ask)
 
-After completing ANY feature, fix, or milestone, run code review immediately:
+After completing ANY feature, fix, or milestone, run code review immediately.
+
+**IMPORTANT — execution constraints:** The code review calls `codex exec` which
+routinely takes 3–8 minutes. You MUST use a **10-minute timeout** (`timeout:
+600000`) and do **NOT** run it in the background — you need the output to act on
+the findings.
 
 ```bash
+# Use: Bash tool with timeout: 600000  (10 minutes), run_in_background: false
 /workspace/moarcode/codereview.sh
 ```
 

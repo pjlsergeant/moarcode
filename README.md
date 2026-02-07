@@ -1,32 +1,29 @@
 # moarcode
 
-Unsupervised AI development in a Docker container. Claude Code writes the code, Codex reviews it.
+You design, Claude writes, Codex reviews, and Gemini doesn't get installed
 
 ## Why
 
-Claude Code and Codex are both more useful when you let them run without asking permission for every file edit and shell command. The tradeoff is trust — you need to be comfortable with what they're doing.
+I have found Claude to be _pretty good_ at writing code, but it's not as conscientious as I'd like. I've found Codex to be _excellent_ at reviewing code, but a fussy and not particularly inspired writer.
 
-moarcode solves this by running everything in a disposable Docker container. Your project is bind-mounted in, but the AI tools run sandboxed — they can't touch anything outside the container. So you give them full autonomy (`--dangerously-skip-permissions`) without actually being dangerous.
+I like to discuss an idea with Claude until we've got a decent implementation plan, get Codex to weigh in on that plan, and then just let them go at it, Claude writing, Codex reviewing.
 
-The other thing moarcode does is pair them up. Claude writes code, then calls Codex to review it. Codex flags issues, Claude fixes them, and the loop continues. You come back to committed, reviewed code.
+I would like to weigh in only when absolutely needed after that point, so we sandbox this into a Docker container, and let them go at it. This is my workflow for doing that.
 
-## Install
+## Get it running
+
+Conceptually, you add a moarcode directory to your project, and then run ./develop.sh
 
 ```bash
 cd your-project
-/path/to/moarcode/install.sh
-```
-
-This copies the template into `moarcode/`, adds it to `.gitignore`, and sets up your `CLAUDE.md`. It asks you to confirm a project name — this is used to name Docker images and volumes, so you can run moarcode in multiple projects simultaneously.
-
-## Usage
-
-```bash
-cd moarcode
+.../path/to/moarcode/install.sh
+cd ./moarcode
 ./develop.sh
 ```
 
-First run prompts you to log in to Claude and Codex via the browser. After that, credentials are cached in `moarcode/.credentials/`.
+`install.sh` copies moarcode to your project, adds it to `.gitignore`, and prepends some information about it to your `CLAUDE.md`. You will also need to confirm the project name at this point: it's used to name Docker images and volumes, so you can run moarcode in multiple projects simultaneously.
+
+When you run `./develop.sh` it'll get you to log in to Codex and then Claude, caching your session credentials in `./moarcode/.credentials/`.
 
 Claude starts in fully autonomous mode. It reads `IMPLEMENTATION.md` for its plan. The default plan starts with M0: understand the codebase and draft milestones with you.
 
@@ -35,6 +32,11 @@ Claude starts in fully autonomous mode. It reads `IMPLEMENTATION.md` for its pla
 - `moarcode/CODEX-REVIEW-PROMPT.md` — change what Codex focuses on during review
 - `moarcode/CLAUDE.md` — change Claude's workflow rules (commit frequency, diary format, etc.)
 - `sudo /usr/local/bin/init-firewall.sh` inside the container — restrict network to HTTP/HTTPS/DNS only
+
+## Advice
+
+* After compaction, I'd consider just restarting the container. You should have enough state, and if you don't, Claude likes to play a bit faster and looser with what you've asked it
+* You may need to remind Claude it needs to take code reviews from Codex. It knows it's meant to, but it can be a little over enthusiastic
 
 ## Requirements
 

@@ -418,3 +418,18 @@ None.
 - **Session ID preservation on resume:** **Fixed** — resume path now preserves the existing session ID when no `thread.started` event is found in the resume JSON stream.
 - **Resumed JSON extraction robustness:** **Fixed** — extractor now tolerates `assistant_message` and falls back to `.item.output_text` / `.item.content[].text` when `.item.text` is missing.
 - **Resume path `--output-last-message`:** Not used in `codex exec resume` path (OK).
+
+---
+
+## Review — 2026-02-07 20:09:04 UTC
+
+### Findings
+
+None.
+
+### Focus Check: Versioning Changes
+
+- `VERSION` file present and used consistently in `develop.sh` and `upgrade.sh`.
+- `CHANGES.md` reflects the 1.0.0 release with dated entry.
+- `upgrade.sh` version display reads source/target versions and reports upgrade status.
+- `develop.sh` version display reports the template version before build.

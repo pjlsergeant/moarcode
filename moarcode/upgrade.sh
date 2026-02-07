@@ -41,8 +41,23 @@ for marker in develop.sh Dockerfile CLAUDE.md; do
   fi
 done
 
+# --- Version info ---
+
+SOURCE_VERSION="unknown"
+TARGET_VERSION="unknown"
+if [ -f "$SOURCE_DIR/VERSION" ]; then
+  SOURCE_VERSION=$(cat "$SOURCE_DIR/VERSION" | tr -d '[:space:]')
+fi
+if [ -f "$TARGET_DIR/VERSION" ]; then
+  TARGET_VERSION=$(cat "$TARGET_DIR/VERSION" | tr -d '[:space:]')
+fi
+
 echo ""
-echo "Upgrading moarcode in $(pwd)/moarcode ..."
+if [ "$SOURCE_VERSION" = "$TARGET_VERSION" ]; then
+  echo "Upgrading moarcode in $(pwd)/moarcode (v${TARGET_VERSION}, already current)..."
+else
+  echo "Upgrading moarcode in $(pwd)/moarcode (v${TARGET_VERSION} → v${SOURCE_VERSION})..."
+fi
 echo ""
 
 # --- Infrastructure files (always overwrite) ---
@@ -56,6 +71,7 @@ INFRA_FILES=(
   init-firewall.sh
   .dockerignore
   .gitignore
+  VERSION
 )
 
 updated=0

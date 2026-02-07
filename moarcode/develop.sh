@@ -22,7 +22,12 @@ fi
 
 IMAGE_NAME="moarcode-${PROJECT_NAME}"
 
-echo "Building ${IMAGE_NAME} image..."
+MOARCODE_VERSION="unknown"
+if [ -f VERSION ]; then
+  MOARCODE_VERSION=$(cat VERSION | tr -d '[:space:]')
+fi
+
+echo "moarcode v${MOARCODE_VERSION} — building ${IMAGE_NAME} image..."
 docker build -t "$IMAGE_NAME" .
 
 echo "Creating node_modules volume..."

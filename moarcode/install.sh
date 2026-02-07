@@ -48,7 +48,8 @@ rm -rf "$TARGET_DIR/.credentials" \
        "$TARGET_DIR/DIARY.md" \
        "$TARGET_DIR/CODEX-DIARY.md" \
        "$TARGET_DIR/IMPLEMENTATION.md" \
-       "$TARGET_DIR/install.sh"
+       "$TARGET_DIR/install.sh" \
+       "$TARGET_DIR/upgrade.sh"
 
 # Persist project name for develop.sh
 echo "$PROJECT_NAME" > "$TARGET_DIR/.project-name"

@@ -29,6 +29,19 @@ When you run `./develop.sh` it'll get you to log in to Codex and then Claude, ca
 
 Claude starts in fully autonomous mode. It reads `IMPLEMENTATION.md` for its plan. The default plan starts with M0: understand the codebase and draft milestones with you.
 
+## Upgrading
+
+When you pull updates to the moarcode repo, upgrade your existing projects:
+
+```bash
+cd your-project
+.../path/to/moarcode/upgrade.sh
+```
+
+This updates scripts, the Dockerfile, and config files while preserving your project state (DIARY.md, IMPLEMENTATION.md, CODEX-DIARY.md, credentials, and project name). If you've customized the workflow templates (CLAUDE.md, CODEX-REVIEW-PROMPT.md), it'll show you a diff and ask before overwriting.
+
+Use `--yes` to skip prompts (also the default in non-interactive/CI contexts).
+
 ## Advice
 
 * After compaction, I'd consider just restarting the container. You should have enough state, and if you don't, Claude likes to play a bit faster and looser with what you've asked it

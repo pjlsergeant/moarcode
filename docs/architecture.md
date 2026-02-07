@@ -60,6 +60,10 @@ sudo /usr/local/bin/init-firewall.sh
 
 Runs on the host from the source repo — it is not copied into the target project. Prompts for a project name (saved to `moarcode/.project-name`), copies moarcode files excluding credentials, `.git`, `node_modules`, `tmp`, and session-specific files. Creates fresh templates for `DIARY.md`, `CODEX-DIARY.md`, and `IMPLEMENTATION.md`. Prepends a moarcode pointer to the top of the project's `CLAUDE.md` (or creates one).
 
+## upgrade.sh
+
+Runs on the host from the source repo (like `install.sh`). Updates infrastructure files (scripts, Dockerfile, dotfiles) in an existing installation while preserving project state (`DIARY.md`, `CODEX-DIARY.md`, `IMPLEMENTATION.md`, `.project-name`, credentials). For template files (`CLAUDE.md`, `CODEX-REVIEW-PROMPT.md`), shows a diff and prompts before overwriting. Supports `--yes` for unattended upgrades; also auto-overwrites when stdin is not a TTY.
+
 ## Credential flow
 
 First run:

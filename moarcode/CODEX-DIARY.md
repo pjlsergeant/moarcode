@@ -139,3 +139,113 @@ None.
 
 - **M5 task wording fix:** OK — M5 tasks no longer name the legacy spec; plan references current docs only.
 - **`develop.sh` empty name guard:** OK — fallback sanitization now errors out if it produces an empty name.
+
+---
+
+## Review — 2026-02-07 19:12:19 UTC
+
+### Findings
+
+1. **`upgrade.sh` plan lacks a guard to confirm the target is a real moarcode install.**
+   - **Where:** `moarcode/tmp/upgrade-plan.md` (Script flow)
+   - **Why:** The flow only checks that `TARGET_DIR` exists. If a user runs the script from the wrong directory (or has a `moarcode/` folder that isn't this template), the script could overwrite unrelated files.
+   - **Impact:** Risk of clobbering non-moarcode directories in the target project.
+   - **Fix idea:** Add a guard that checks for expected markers (e.g., `TARGET_DIR/develop.sh`, `TARGET_DIR/.project-name`, and `TARGET_DIR/CLAUDE.md`) and emit a clear error if they’re missing. Also add a message if the script is run from inside an existing `moarcode/` dir to avoid confusing “not installed” errors.
+
+2. **Template diff prompt does not account for non-interactive usage.**
+   - **Where:** `moarcode/tmp/upgrade-plan.md` (Templates step)
+   - **Why:** The plan assumes a TTY for `read -r` prompts. In CI or automated scripts, this will block or fail.
+   - **Impact:** `upgrade.sh` could hang indefinitely or exit without completing updates in non-interactive contexts.
+   - **Fix idea:** Detect TTY (`[ -t 0 ]`) and default to a safe behavior when non-interactive (e.g., auto-overwrite or auto-skip with a warning). Consider a `--yes` or `--skip-templates` flag.
+
+3. **Upgrade flow doesn’t address stale or removed files from older installs.**
+   - **Where:** `moarcode/tmp/upgrade-plan.md` (File classification, cleanup)
+   - **Why:** Only `install.sh` removal is mentioned. If older installs include files that are later removed or renamed (including an old `upgrade.sh` copied into the target), they’ll linger and cause confusion.
+   - **Impact:** Users can end up running outdated scripts or keeping deprecated files.
+   - **Fix idea:** Explicitly remove any source-repo-only scripts (`install.sh`, `upgrade.sh`) from the target, and consider a short allowlist cleanup for known-deprecated infra files. At minimum, warn if the target contains files not present in the source infra list.
+
+4. **No defined behavior if a listed infra file is missing in the source.**
+   - **Where:** `moarcode/tmp/upgrade-plan.md` (Copy infra files step)
+   - **Why:** The plan assumes all infra files exist in the source. If a file is removed in a future release, `cp` will fail and abort the upgrade.
+   - **Impact:** Upgrades break on future refactors where infra files are renamed or deleted.
+   - **Fix idea:** Iterate the infra list with existence checks; warn and continue (or fail with a specific message) when a file is missing so the behavior is predictable.
+
+---
+
+## Review — 2026-02-07 19:14:45 UTC
+
+### Findings
+
+1. **`upgrade.sh` plan still lacks a robust non-interactive path.**
+   - **Where:** `moarcode/tmp/upgrade-plan.md` (Templates step)
+   - **Why:** The revised plan adds a `--yes` flag but doesn’t define behavior when stdin is not a TTY and `--yes` is omitted. In CI or scripted runs this can still block on prompts.
+   - **Impact:** Upgrades can hang unexpectedly in non-interactive environments unless callers remember `--yes`.
+   - **Fix idea:** Detect non-interactive mode (`[ -t 0 ]`) and either auto-apply a safe default or error with a clear message suggesting `--yes`.
+
+2. **`upgrade.sh` target validation is too weak to confirm a real moarcode install.**
+   - **Where:** `moarcode/tmp/upgrade-plan.md` (Guard: valid moarcode installation)
+   - **Why:** The guard only checks for `develop.sh`. A random directory could contain a `moarcode/` folder with a `develop.sh` file but not be a real install.
+   - **Impact:** The upgrade could clobber unrelated content in edge cases where a similarly named folder exists.
+   - **Fix idea:** Check multiple markers (e.g., `.project-name`, `CLAUDE.md`, `CODEX-REVIEW-PROMPT.md`) or a single sentinel file to establish identity.
+
+### Upgrade Plan Check (Prior 4 Findings)
+
+- **Guard for real install:** **Partially addressed** (only `develop.sh` check). See Finding 2.
+- **Non-interactive prompts:** **Partially addressed** (`--yes` exists, no TTY default). See Finding 1.
+- **Stale/removed files:** **Addressed** (explicit cleanup + unexpected file warning).
+- **Missing infra source files:** **Addressed** (skip missing files with warning).
+
+---
+
+## Review — 2026-02-07 19:16:44 UTC
+
+### Findings
+
+None.
+
+### Focus Check: moarcode/tmp/upgrade-plan.md (Revised Upgrade Plan)
+
+All previous findings are resolved:
+- Guard for real installs now checks multiple markers (develop.sh, Dockerfile, CLAUDE.md)
+- Non-interactive usage now defaults to auto-overwrite with a clear note
+- Stale/removed files handled (install.sh/upgrade.sh cleanup + unexpected file warnings)
+- Missing infra files in source are skipped with warnings
+
+---
+
+## Review — 2026-02-07 19:23:48 UTC
+
+### Findings
+
+1. **`install.sh` leaves a non-functional `upgrade.sh` in installed templates.**
+   - **Where:** `moarcode/install.sh`, `moarcode/upgrade.sh`
+   - **Why:** `install.sh` copies the full template then deletes `install.sh`, but does **not** delete `upgrade.sh`. The installed copy of `upgrade.sh` refuses to run when `SOURCE_DIR == TARGET_DIR`, which is exactly what happens if a user runs `./moarcode/upgrade.sh` from their project root.
+   - **Impact:** Users will see a confusing “already inside a moarcode directory” error from the installed `upgrade.sh`, even though that is the most obvious script to run.
+   - **Fix idea:** Remove `upgrade.sh` during install (like `install.sh`), or make the installed copy print a clear message telling users to run the source-repo `upgrade.sh` instead.
+
+---
+
+## Review — 2026-02-07 19:25:14 UTC
+
+### Findings
+
+None.
+
+### Focus Check: install.sh / upgrade.sh
+
+- **Install/upgrade consistency issue:** **Resolved.** `install.sh` now removes `upgrade.sh` from the installed template, and `upgrade.sh` itself cleans up any stale `install.sh`/`upgrade.sh` in target installs. No further issues found in these scripts.
+
+---
+
+## Review — 2026-02-07 19:30:13 UTC
+
+### Findings
+
+None.
+
+### Focus Check
+
+- **upgrade.sh (new script):** OK — guards, non-interactive behavior, template prompting, and cleanup look correct.
+- **install.sh fix (remove upgrade.sh in target):** OK — installed template no longer contains a non-functional upgrader.
+- **README.md upgrade docs:** OK — matches current upgrade flow and non-interactive default.
+- **docs/architecture.md upgrade section:** OK — accurately describes behavior.

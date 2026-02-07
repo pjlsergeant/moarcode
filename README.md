@@ -27,12 +27,6 @@ When you run `./develop.sh` it'll get you to log in to Codex and then Claude, ca
 
 Claude starts in fully autonomous mode. It reads `IMPLEMENTATION.md` for its plan. The default plan starts with M0: understand the codebase and draft milestones with you.
 
-## Customizing
-
-- `moarcode/CODEX-REVIEW-PROMPT.md` — change what Codex focuses on during review
-- `moarcode/CLAUDE.md` — change Claude's workflow rules (commit frequency, diary format, etc.)
-- `sudo /usr/local/bin/init-firewall.sh` inside the container — restrict network to HTTP/HTTPS/DNS only
-
 ## Advice
 
 * After compaction, I'd consider just restarting the container. You should have enough state, and if you don't, Claude likes to play a bit faster and looser with what you've asked it

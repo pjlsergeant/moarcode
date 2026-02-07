@@ -99,3 +99,64 @@ These findings have been reviewed by the developer and are intentional:
 
 2. **Container is granted elevated networking capabilities unconditionally.**
    `moarcode/develop.sh` always adds `--cap-add=NET_ADMIN` and `--cap-add=NET_RAW`, even when the firewall is not used. This broadens the container’s privilege surface by default. Consider gating these caps behind an opt-in flag (e.g., `MOARCODE_FIREWALL=1`) to match the “optional” network sandbox in the spec.
+
+---
+
+## Review — 2026-02-06 19:41:33 +0000
+
+### Findings
+
+1. **`install.sh` removes itself from installed template, contradicting MOARCODE.md.**
+   - `moarcode/install.sh` deletes `moarcode/install.sh` in the target after copying. The spec’s directory structure and quick-start describe `install.sh` as part of the template, so the installed `moarcode/` no longer matches documentation. Decide whether `install.sh` should remain in installed projects (keep it) or update `MOARCODE.md` to remove it from the expected structure. (File: `moarcode/install.sh`)
+
+---
+
+## Review — 2026-02-06 19:44:43 +0000
+
+### Findings
+
+No new issues found in this review.
+
+---
+
+## Review — 2026-02-06 19:51:17 +0000
+
+### Findings
+
+1. **IMPLEMENTATION.md references a missing spec file.**
+   - `moarcode/IMPLEMENTATION.md` still points to `/workspace/MOARCODE.md` as the reference spec, but `MOARCODE.md` no longer exists (replaced by `README.md` and `docs/architecture.md`). This is a deviation from the plan and will confuse future reviewers or developers. Update the reference to the new docs or restore the spec file.
+
+---
+
+## Review — 2026-02-06 19:55:53 +0000
+
+### Findings
+
+1. **Project name validation allows leading hyphens/underscores, which can break Docker commands.**
+   - `moarcode/install.sh` sanitizes input but doesn't enforce that the name starts with an alphanumeric character. A name like `-demo` survives and is later used by `moarcode/develop.sh` in `docker build -t "moarcode--demo"` and `docker volume create "-demo-node_modules"`, which can be interpreted as flags or rejected by Docker. Enforce a stricter pattern (e.g. `^[a-z0-9][a-z0-9_-]*$`) after sanitization and exit or re-prompt if invalid. Also consider re-validating `.project-name` in `develop.sh` to avoid failure if the file is edited.
+
+---
+
+## Review — 2026-02-06 20:03:31 +0000
+
+### Findings
+
+1. **`develop.sh` fallback project name can create invalid Docker names.**
+   - If `.project-name` is missing or edited, the fallback name is derived from the parent directory without lowercasing and without stripping leading `-`/`_`. Docker image names must be lowercase and leading hyphens in the volume name can be interpreted as flags or rejected. This can break `docker build` or `docker volume create` when the project directory starts with `-`/`_` or has uppercase. Reuse the same sanitization/validation as `install.sh` (lowercase, strip leading `-`/`_`, and validate). (File: `moarcode/develop.sh`)
+
+2. **Docs drift: `develop.sh` naming behavior is outdated.**
+   - `docs/architecture.md` still says the project name is derived from the parent directory, but the current flow uses `.project-name` created by `install.sh` (with user input). This is a direct deviation from the implementation and should be updated. (File: `docs/architecture.md`)
+
+3. **`install.sh` removes itself from installed template, but docs imply it remains.**
+   - `install.sh` deletes `moarcode/install.sh` in the target, yet the docs describe `install.sh` as part of the template. Decide whether `install.sh` should be kept in the installed `moarcode/` (so users can re-run or inspect it) or update documentation to state it is a one-shot installer. (Files: `moarcode/install.sh`, `docs/architecture.md`, `README.md`)
+
+---
+
+## Review — 2026-02-07 11:03:57 +0000
+
+### Findings
+
+1. **`develop.sh` trusts `.project-name` without validation, which can break Docker naming.**
+   - `develop.sh` reads `.project-name` verbatim and uses it for the Docker image/volume names. If the file is empty or manually edited to include uppercase, spaces, or leading punctuation, `docker build -t "moarcode-${PROJECT_NAME}"` and `docker volume create "${PROJECT_NAME}-node_modules"` can fail with “invalid reference format” or treat names as flags.
+   - Consider reusing the same sanitization/validation logic as `install.sh` in `develop.sh` and erroring out if the sanitized result is empty or differs (so the user can fix `.project-name`).
+   - File: `moarcode/develop.sh`

@@ -42,6 +42,12 @@ After completing ANY feature, fix, or milestone, run code review immediately:
 /workspace/moarcode/codereview.sh
 ```
 
+For a directed review focusing on specific concerns:
+
+```bash
+/workspace/moarcode/codereview.sh "error handling in the API layer"
+```
+
 Do NOT ask the user "should I run code review?" — the answer is always yes.
 Do NOT proceed to the next milestone until code review passes.
 

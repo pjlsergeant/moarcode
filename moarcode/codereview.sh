@@ -16,13 +16,24 @@ mkdir -p "$TEMP_DIR"
 OUTPUT_FILE=$(mktemp "${TEMP_DIR}/codereview-output.XXXXXX")
 DEBUG_FILE=$(mktemp "${TEMP_DIR}/codereview-debug.XXXXXX")
 
-echo "Running code review (this may take several minutes)..."
+if [[ $# -gt 0 ]]; then
+  echo "Running code review with focus: $* (this may take several minutes)..."
+else
+  echo "Running code review (this may take several minutes)..."
+fi
 
 # Run from project root so paths in the prompt work correctly
 cd /workspace
 
 # Read prompt from file
 PROMPT=$(cat /workspace/moarcode/CODEX-REVIEW-PROMPT.md)
+
+# Append directed review focus if arguments were provided
+if [[ $# -gt 0 ]]; then
+  PROMPT="${PROMPT}
+
+You have been asked to pay particular attention in this review to: $*"
+fi
 
 if codex exec \
     --dangerously-bypass-approvals-and-sandbox \

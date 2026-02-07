@@ -38,6 +38,16 @@ The project name (used for the Docker image and volume) is read from `moarcode/.
 
 Runs inside the container. Reads `CODEX-REVIEW-PROMPT.md` and passes it to `codex exec`. Codex reads the codebase, writes findings to `CODEX-DIARY.md`, and returns a report. Temp files go to `moarcode/tmp/` (gitignored).
 
+Accepts optional arguments for directed reviews — any arguments are appended to the prompt as a "pay particular attention to" instruction:
+
+```bash
+# Standard review
+/workspace/moarcode/codereview.sh
+
+# Directed review
+/workspace/moarcode/codereview.sh "error handling in the API layer"
+```
+
 ## Network sandbox (optional)
 
 `init-firewall.sh` uses iptables to restrict outbound traffic to DNS (53), HTTP (80), and HTTPS (443). IPv4 only — IPv6 is not covered. Run it manually inside the container:

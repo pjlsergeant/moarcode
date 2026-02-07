@@ -4,6 +4,7 @@ FROM node:20
 RUN apt-get update && apt-get install -y --no-install-recommends \
     less \
     git \
+    curl \
     procps \
     sudo \
     fzf \
@@ -35,13 +36,14 @@ WORKDIR /workspace
 
 # npm global path
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
+ENV PATH=$PATH:/usr/local/share/npm-global/bin:/home/node/.local/bin
 ENV CLAUDE_CONFIG_DIR=/home/node/.claude
 
 USER node
 
 # CRITICAL: Both AI tools installed
-RUN npm install -g @anthropic-ai/claude-code @openai/codex
+RUN curl -fsSL https://claude.ai/install.sh | bash
+RUN npm install -g @openai/codex
 
 # Git config for commits
 RUN git config --global --add safe.directory /workspace \

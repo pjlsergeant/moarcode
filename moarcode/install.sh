@@ -20,7 +20,7 @@ if [ -d "$TARGET_DIR" ]; then
 fi
 
 # Derive a default project name from the current directory
-DEFAULT_NAME=$(basename "$(pwd)" | tr -cs '[:alnum:]-_' '-' | sed 's/^[-_]*//;s/-$//')
+DEFAULT_NAME=$(basename "$(pwd)" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]-_' '-' | sed 's/[-_][-_]*/-/g; s/^[-_]*//; s/[-_]*$//')
 
 echo ""
 echo "Project name is used for Docker image/volume naming."
@@ -29,7 +29,7 @@ printf "Project name [%s]: " "$DEFAULT_NAME"
 read -r PROJECT_NAME
 PROJECT_NAME=${PROJECT_NAME:-$DEFAULT_NAME}
 # Sanitize whatever they typed
-PROJECT_NAME=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]-_' '-' | sed 's/^[-_]*//;s/-$//')
+PROJECT_NAME=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]-_' '-' | sed 's/[-_][-_]*/-/g; s/^[-_]*//; s/[-_]*$//')
 
 if [ -z "$PROJECT_NAME" ]; then
   echo "Error: project name cannot be empty."

@@ -11,7 +11,13 @@ if [ -f .project-name ]; then
 else
   echo "Warning: .project-name not found. Run install.sh first."
   echo "Falling back to directory name."
-  PROJECT_NAME=$(basename "$PROJECT_ROOT" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]-_' '-' | sed 's/^[-_]*//;s/-$//')
+  PROJECT_NAME=$(basename "$PROJECT_ROOT" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]-_' '-' | sed 's/[-_][-_]*/-/g; s/^[-_]*//; s/[-_]*$//')
+fi
+
+if [ -z "$PROJECT_NAME" ]; then
+  echo "Error: could not determine a valid project name."
+  echo "Run install.sh first, or create .project-name manually."
+  exit 1
 fi
 
 IMAGE_NAME="moarcode-${PROJECT_NAME}"

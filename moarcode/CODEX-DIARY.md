@@ -52,7 +52,90 @@ Nine reviews were conducted during M1–M4. Key findings and their resolutions:
 - NET_ADMIN/NET_RAW always granted (harmless without firewall invocation)
 - `develop.sh` doesn't re-validate `.project-name` (machine-generated file)
 
+---
+
+## Review — 2026-02-07 11:10:40 UTC
+
+### Findings
+
+1. **Project name sanitization can still produce invalid Docker image/volume names.**
+   - **Where:** `moarcode/install.sh`, `moarcode/develop.sh`
+   - **Why:** The sanitizer only strips leading `[-_]` and a single trailing `-`, and it does not collapse existing repeated separators (e.g. `my--project`) or trim trailing `_`. Docker image names require components like `[a-z0-9]+([._-][a-z0-9]+)*`; trailing `_`/`-` or repeated separators are invalid. This can break `docker build -t` and `docker volume create` if the directory name or user input contains consecutive separators or ends with `_`.
+   - **Impact:** `./develop.sh` can fail even after “successful” install if the project name is malformed in those edge cases.
+   - **Fix idea:** Normalize consecutive separators and trim all trailing separators (e.g. `sed 's/[-_][-_]*/-/g; s/^[-_]*//; s/[-_]*$//'`). Apply in both `install.sh` and the fallback in `develop.sh`.
+
+2. **Implementation plan still references removed `MOARCODE.md` and no longer matches docs.**
+   - **Where:** `moarcode/IMPLEMENTATION.md`
+   - **Why:** M3/M4 tasks mention reviewing/updating `MOARCODE.md`, but the repo now uses `README.md` + `docs/architecture.md`. This is a direct plan/documentation mismatch.
+   - **Impact:** New contributors following the plan will look for the wrong file and may miss required doc updates.
+   - **Fix idea:** Update M4 tasks and acceptance criteria to reference `README.md` and `docs/architecture.md` instead of `MOARCODE.md`.
+
+### Parting Wisdom Before v1
+
+- The core architecture is sound: Dockerized runtime, credential bind mounts, and explicit review loop are cohesive and minimal. The remaining risks are mostly edge-case polish.
+- Tighten the project name sanitizer now to avoid user-facing Docker failures — it’s the most likely “first run” paper cut.
+- Refresh the plan to align with the new docs so v1 doesn’t ship with internal drift.
+
+---
+
+## Review — 2026-02-07 11:13:55 UTC
+
+### Findings
+
+1. **IMPLEMENTATION.md still references `MOARCODE.md`, violating the M5 plan-drift fix.**
+   - **Where:** `moarcode/IMPLEMENTATION.md`
+   - **Why:** M3 tasks still include “Update MOARCODE.md if any discrepancies found,” and M5 acceptance criteria state “No references to `MOARCODE.md` remain,” which the plan itself violates. This contradicts the M5 requirement to remove `MOARCODE.md` references from the plan.
+   - **Impact:** The M5 plan-drift fix is incomplete and new contributors may still chase a non-existent doc.
+   - **Fix idea:** Replace the M3 task with `README.md` + `docs/architecture.md`, and update the M5 acceptance criteria to avoid self-contradiction (or remove the `MOARCODE.md` mention entirely).
+
 ### Not applicable / resolved by other changes
 - `install.sh` self-deletion — docs updated to reflect it's a one-shot installer
 - Codex symlink — never needed, `command -v` works, old spec removed
 - UID/GID `$HOME` ownership — works correctly for the standard case
+
+---
+
+## Review — 2026-02-07 11:16:38 UTC
+
+### Findings
+
+1. **Plan drift remains: `IMPLEMENTATION.md` still references `MOARCODE.md`.**
+   - **Where:** `moarcode/IMPLEMENTATION.md`
+   - **Why:** M5 Acceptance Criteria includes “No references to `MOARCODE.md` remain in the plan or docs,” but this statement itself is a reference to `MOARCODE.md`. This makes the acceptance criterion self-contradictory and keeps the M3 “MOARCODE.md reference fix” incomplete.
+   - **Impact:** The plan cannot satisfy its own acceptance criteria, and new contributors still see a `MOARCODE.md` reference inside the plan.
+   - **Fix idea:** Reword the M5 acceptance criterion to avoid naming `MOARCODE.md`, e.g., “Plan and docs contain no references to removed legacy specs.”
+
+---
+
+## Review — 2026-02-07 11:18:20 UTC
+
+### Findings
+
+1. **M5 acceptance criteria not met: IMPLEMENTATION.md still references a removed legacy spec.**
+   - **Where:** `moarcode/IMPLEMENTATION.md`
+   - **Why:** The M5 task line reads “update M4 tasks and acceptance criteria to reference `README.md` and `docs/architecture.md` instead of `MOARCODE.md`.” This is still a direct mention of the legacy file inside the plan itself. The M5 acceptance criteria says “Plan and docs reference only current files,” which is violated by that mention.
+   - **Impact:** The plan cannot satisfy its own M5 acceptance criteria; contributors still see a legacy spec name in the plan.
+   - **Fix idea:** Reword the M5 task to avoid naming the legacy file (e.g., “replace any legacy spec references with README.md + docs/architecture.md”).
+
+2. **Fallback project-name path can produce an empty Docker name.**
+   - **Where:** `moarcode/develop.sh`
+   - **Why:** If `.project-name` is missing and the parent directory is composed solely of stripped characters (e.g., `___` or `---`), the sanitizer produces an empty string. The script then builds `IMAGE_NAME="moarcode-"` and creates a `-node_modules` volume, which Docker treats as invalid.
+   - **Impact:** `./develop.sh` fails with a confusing Docker error for users who run it outside `install.sh` or in oddly named directories.
+   - **Fix idea:** After sanitization, guard against an empty `PROJECT_NAME` and exit with a clear error (or prompt for input).
+
+### Final Check
+
+- **M5 clean:** **No** — blocked by the remaining legacy spec mention in `IMPLEMENTATION.md` (Finding 1).
+
+---
+
+## Review — 2026-02-07 11:19:56 UTC
+
+### Findings
+
+None.
+
+### Focus Checks
+
+- **M5 task wording fix:** OK — M5 tasks no longer name the legacy spec; plan references current docs only.
+- **`develop.sh` empty name guard:** OK — fallback sanitization now errors out if it produces an empty name.

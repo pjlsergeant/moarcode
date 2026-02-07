@@ -12,7 +12,9 @@ I would like to weigh in only when absolutely needed after that point, so we san
 
 ## Get it running
 
-Conceptually, you add a moarcode directory to your project, and then run ./develop.sh
+**Step one**: clone this repo to somewhere on your machine
+
+**Step two**: Conceptually, you add a moarcode directory to your project, and then run ./develop.sh:
 
 ```bash
 cd your-project

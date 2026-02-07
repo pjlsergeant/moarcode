@@ -249,3 +249,94 @@ None.
 - **install.sh fix (remove upgrade.sh in target):** OK — installed template no longer contains a non-functional upgrader.
 - **README.md upgrade docs:** OK — matches current upgrade flow and non-interactive default.
 - **docs/architecture.md upgrade section:** OK — accurately describes behavior.
+
+---
+
+## Review — 2026-02-07 19:43:01 UTC
+
+### Findings
+
+1. **Resume path lacks an immediate fallback when the stored session ID is invalid or expired.**
+   - **Where:** `moarcode/tmp/resume-plan.md` (Implementation → `--continue` flow)
+   - **Why:** The plan says to clear the session file on failure and require a fresh run next time. If `codex exec resume` fails (e.g., invalid/expired thread ID), the user must re-run the command manually to get a fresh review.
+   - **Impact:** Adds friction and makes `--continue` fragile in the common case of stale sessions.
+   - **Fix idea:** If resume fails with an invalid/expired session, automatically fall back to a fresh `codex exec` in the same invocation, then replace `.last-review-session` with the new thread ID.
+
+2. **Resume prompt does not explicitly force re-reading required files or detecting changed files.**
+   - **Where:** `moarcode/tmp/resume-plan.md` (prompt for continued reviews)
+   - **Why:** The shortened prompt relies on prior context, but the review process explicitly requires reading `CODEX-DIARY.md`, `IMPLEMENTATION.md`, `DIARY.md`, and root `CLAUDE.md`. Without re-reading or at least checking `git status`/`git diff`, Codex can miss updates since the last review.
+   - **Impact:** High risk of false “clean” reviews or missed regressions when the developer makes changes between runs.
+   - **Fix idea:** In the resume prompt, explicitly instruct Codex to re-read the required files and to run `git status --porcelain` or `git diff --name-only` to identify changed files for focused review.
+
+3. **Session ID capture is underspecified and may be brittle with `--json` streaming output.**
+   - **Where:** `moarcode/tmp/resume-plan.md` (Implementation → save session ID)
+   - **Why:** `codex exec --json` emits a stream of JSON events; the plan doesn’t define how to robustly extract `thread_id` (e.g., via `jq` on `thread.started`). If parsing fails, `.last-review-session` could be empty or corrupted.
+   - **Impact:** `--continue` may silently fall back to fresh runs or fail to resume, undermining the feature.
+   - **Fix idea:** Capture stdout to a debug file and extract the `thread_id` with `jq` (or a strict grep with validation). If missing, warn and do not update `.last-review-session`.
+
+### Focus Check: moarcode/tmp/resume-plan.md
+
+- **Gaps/edge cases:** The resume flow needs a robust invalid-session fallback and explicit re-read/change-detection instructions.
+- **Feasibility:** The plan is feasible, but depends on reliable JSON parsing for `thread_id` and clear guidance in the resume prompt to avoid stale-context reviews.
+
+---
+
+## Review — 2026-02-07 19:45:25 UTC
+
+### Findings
+
+1. **Resume prompt still doesn't require re-reading mandatory files.**
+   - **Where:** `moarcode/tmp/resume-plan.md` (resume prompt text)
+   - **Why:** The prompt only instructs `git diff HEAD~1` and `git status` for change detection. It does not explicitly require re-reading `moarcode/CODEX-DIARY.md`, `moarcode/IMPLEMENTATION.md`, `moarcode/DIARY.md`, and the root `CLAUDE.md`, which are mandatory in the workflow.
+   - **Impact:** Resumed reviews can miss updated constraints or new findings, leading to false “clean” results.
+   - **Fix idea:** Add an explicit instruction in the resume prompt to re-read the required files before assessing changes. Consider using `git diff --name-only` + re-open changed files after the mandatory reads.
+
+2. **Resume prompt assumes `HEAD~1` exists.**
+   - **Where:** `moarcode/tmp/resume-plan.md` (resume prompt text)
+   - **Why:** `git diff HEAD~1` fails on repos with a single commit or in detached/initial states.
+   - **Impact:** The resume prompt can error or return confusing output in new or freshly initialized repos.
+   - **Fix idea:** Use `git diff --name-only` (against working tree) or guard with `git rev-parse --verify HEAD~1` and fall back to `git status --porcelain`.
+
+### Focus Check: resume plan revisions (prior 3 findings)
+
+- **Stale session fallback:** **Addressed** — resume failures now fall back to a fresh run in the same invocation.
+- **Change detection:** **Partially addressed** — adds `git diff`/`git status`, but still missing mandatory re-read of required files.
+- **Session ID parsing:** **Addressed** — plan defines `thread.started` extraction with validation and failure handling.
+
+---
+
+## Review — 2026-02-07 19:46:45 UTC
+
+### Findings
+
+1. **Resume prompt claims staged+unstaged diffs but only names `git diff`.**
+   - **Where:** `moarcode/tmp/resume-plan.md` (resume prompt text)
+   - **Why:** The prompt says to run “`git diff` (staged + unstaged)”, but plain
+     `git diff` shows unstaged changes only. Staged changes require
+     `git diff --cached` (or a combined `git diff --name-only` + `git diff --cached`).
+   - **Impact:** Resumed reviews can miss staged changes and incorrectly report
+     a clean diff when only the index changed.
+   - **Fix idea:** Update the prompt to run both `git diff` and `git diff --cached`,
+     or use `git diff --name-only` alongside `git status --porcelain` to capture
+     staged and unstaged modifications.
+
+### Focus Check: revised resume plan
+
+- **Mandatory file re-reads:** **Resolved** — prompt explicitly re-reads
+  `moarcode/CODEX-DIARY.md`, `moarcode/IMPLEMENTATION.md`, `moarcode/DIARY.md`,
+  and the root `CLAUDE.md`.
+- **`HEAD~1` assumption:** **Resolved** — no longer relies on `git diff HEAD~1`.
+
+---
+
+## Review — 2026-02-07 19:47:57 UTC
+
+### Findings
+
+None.
+
+### Focus Check: moarcode/tmp/resume-plan.md
+
+- **Staged diff issue:** **Resolved** — resume prompt now calls both `git diff` and
+  `git diff --cached`.
+- **Remaining findings:** **None** — no additional issues found in the resume plan.

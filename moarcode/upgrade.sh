@@ -66,21 +66,21 @@ cleaned=0
 for f in "${INFRA_FILES[@]}"; do
   if [ ! -f "$SOURCE_DIR/$f" ]; then
     echo "  warn: $f not found in source, skipping"
-    ((skipped++))
+    skipped=$((skipped + 1))
     continue
   fi
   if [ -f "$TARGET_DIR/$f" ] && diff -q "$SOURCE_DIR/$f" "$TARGET_DIR/$f" >/dev/null 2>&1; then
-    ((skipped++))
+    skipped=$((skipped + 1))
     continue
   fi
   if [ -f "$TARGET_DIR/$f" ]; then
     cp "$SOURCE_DIR/$f" "$TARGET_DIR/$f"
     echo "  updated: $f"
-    ((updated++))
+    updated=$((updated + 1))
   else
     cp "$SOURCE_DIR/$f" "$TARGET_DIR/$f"
     echo "  added:   $f"
-    ((added++))
+    added=$((added + 1))
   fi
 done
 
@@ -94,19 +94,19 @@ TEMPLATE_FILES=(
 for f in "${TEMPLATE_FILES[@]}"; do
   if [ ! -f "$SOURCE_DIR/$f" ]; then
     echo "  warn: $f not found in source, skipping"
-    ((skipped++))
+    skipped=$((skipped + 1))
     continue
   fi
 
   if [ ! -f "$TARGET_DIR/$f" ]; then
     cp "$SOURCE_DIR/$f" "$TARGET_DIR/$f"
     echo "  added:   $f"
-    ((added++))
+    added=$((added + 1))
     continue
   fi
 
   if diff -q "$SOURCE_DIR/$f" "$TARGET_DIR/$f" >/dev/null 2>&1; then
-    ((skipped++))
+    skipped=$((skipped + 1))
     continue
   fi
 
@@ -114,7 +114,7 @@ for f in "${TEMPLATE_FILES[@]}"; do
   if [ "$AUTO_YES" = true ]; then
     cp "$SOURCE_DIR/$f" "$TARGET_DIR/$f"
     echo "  updated: $f (auto-overwritten)"
-    ((updated++))
+    updated=$((updated + 1))
   else
     echo ""
     echo "  $f has local changes:"
@@ -126,11 +126,11 @@ for f in "${TEMPLATE_FILES[@]}"; do
       [Yy]*|"")
         cp "$SOURCE_DIR/$f" "$TARGET_DIR/$f"
         echo "  updated: $f"
-        ((updated++))
+        updated=$((updated + 1))
         ;;
       *)
         echo "  kept:    $f (local version)"
-        ((skipped++))
+        skipped=$((skipped + 1))
         ;;
     esac
   fi
@@ -144,7 +144,7 @@ for f in "${STALE_FILES[@]}"; do
   if [ -f "$TARGET_DIR/$f" ]; then
     rm "$TARGET_DIR/$f"
     echo "  removed: $f (source-repo only)"
-    ((cleaned++))
+    cleaned=$((cleaned + 1))
   fi
 done
 

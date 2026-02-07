@@ -63,3 +63,40 @@ Claude Code + Codex code review in a Docker container.
 - `develop.sh` fallback applies the same sanitization
 - Plan and docs reference only current files (README.md, docs/architecture.md)
 
+---
+
+### M6: Resumable Code Review Sessions
+
+**Goal:** Allow the driving agent to continue a previous Codex review session
+instead of starting from scratch every time, reducing redundant file reads in
+the common "fix and re-check" loop.
+
+**Background:** We tested `codex exec resume` inside the container and confirmed:
+- Resumed sessions carry the full conversation transcript (file contents, command
+  outputs) — Codex can answer from memory without re-reading
+- Token costs accumulate (~90% cached) but are manageable for a few rounds
+- Session ID is a UUID from the `thread.started` JSON event
+- `--json`, `--output-last-message`, and `--dangerously-bypass-approvals-and-sandbox`
+  all work with resume
+
+**Tasks:**
+- [ ] Add `--continue` flag to `codereview.sh`
+- [ ] Capture session ID (via `--json` + `grep`/`jq`) after every successful review
+- [ ] Save session ID to `moarcode/tmp/.last-review-session`
+- [ ] On `--continue`: read session ID, validate as UUID, attempt
+      `codex exec resume <id>` with a shorter follow-up prompt
+- [ ] Resume prompt: re-read diaries/plan/CLAUDE.md, run `git status` + `git diff`
+      + `git diff --cached` + `git log --oneline -5`, then review changes
+- [ ] If resume fails (bad ID, expired session): clear session file, warn, and
+      automatically fall back to a fresh review
+- [ ] Update `moarcode/CLAUDE.md` to mention `--continue` for the fix-and-recheck loop
+- [ ] Update `docs/architecture.md` codereview.sh section
+
+**Acceptance Criteria:**
+- Fresh reviews work exactly as before (no behavioural change without `--continue`)
+- `--continue` resumes the last session and Codex references previous context
+- `--continue` with no saved session falls back to fresh with a warning
+- `--continue` with an invalid/expired session falls back to fresh automatically
+- Session ID file is in `tmp/` (already gitignored)
+- Code review clean
+
